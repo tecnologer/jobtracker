@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jobtracker-data
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jobtracker
+spec:
+  replicas: 1  # ponytail: SQLite is single-writer; scale only if you migrate to Postgres
+  selector:
+    matchLabels:
+      app: jobtracker
+  template:
+    metadata:
+      labels:
+        app: jobtracker
+    spec:
+      containers:
+        - name: jobtracker
+          image: jobtracker:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DB_PATH
+              value: /data/jobs.db
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: jobtracker-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jobtracker
+spec:
+  selector:
+    app: jobtracker
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: ClusterIP
