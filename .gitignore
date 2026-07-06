@@ -1,0 +1,13 @@
+# Databases
+*.db
+*.db-shm
+*.db-wal
+
+# Build / tooling
+/tmp/
+jobtracker
+web/dist/
+web/node_modules/
+
+# IDE
+.idea/
