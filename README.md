@@ -2,6 +2,9 @@
 
 Track job applications — Go REST API + Vue 3 SPA.
 
+<img width="1197" height="628" alt="image" src="https://github.com/user-attachments/assets/e216a7f7-6ab2-4c50-b913-0123d9d73194" />
+
+
 ## Run manually
 
 **Requirements:** Go 1.22+, Node 20+
