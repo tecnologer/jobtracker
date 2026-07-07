@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/tecnologer/jobtracker/handler"
 	"github.com/tecnologer/jobtracker/store"
@@ -37,8 +38,24 @@ func main() {
 	mux.HandleFunc("POST /api/jobs/{id}/stages", h.CreateStage)
 	mux.HandleFunc("PUT /api/stages/{id}", h.UpdateStage)
 	mux.HandleFunc("DELETE /api/stages/{id}", h.DeleteStage)
-	mux.Handle("/", http.FileServer(http.Dir("web/dist")))
+	mux.Handle("/", cacheControl(http.FileServer(http.Dir("web/dist"))))
 
 	log.Println("listening on :8080")
 	log.Fatal(http.ListenAndServe(":8080", mux))
+}
+
+// cacheControl sets caching headers appropriate for an SPA build:
+// content-hashed assets under /assets/ are cached immutably, while the
+// unhashed index.html entry point must be revalidated on every load so a
+// stale copy never references deleted hashed filenames (blank page on reload).
+func cacheControl(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, "/assets/") {
+			w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+		} else {
+			// index.html and any other SPA entry response.
+			w.Header().Set("Cache-Control", "no-cache")
+		}
+		next.ServeHTTP(w, r)
+	})
 }
