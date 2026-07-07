@@ -1,5 +1,5 @@
 [build]
-cmd = "go build -o ./tmp/main ."
+cmd = "go build -buildvcs=false -o ./tmp/main ."
 bin = "./tmp/main"
 include_ext = ["go"]
 exclude_dir = ["web", "tmp", "vendor", "k8s"]
