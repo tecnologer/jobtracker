@@ -103,16 +103,16 @@
 
       <!-- Table -->
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <table class="w-full text-sm">
+        <table class="w-full table-fixed text-sm">
           <thead class="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
             <tr>
-              <th class="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">Company</th>
-              <th class="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">Position</th>
-              <th class="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">Status</th>
-              <th class="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">Stage</th>
-              <th class="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">Applied</th>
-              <th class="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">Notes</th>
-              <th class="px-4 py-3"></th>
+              <th class="w-[12%] text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">Company</th>
+              <th class="w-[18%] text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">Position</th>
+              <th class="w-[9%] text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">Status</th>
+              <th class="w-[12%] text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">Stage</th>
+              <th class="w-[14%] text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">Applied</th>
+              <th class="w-[19%] text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">Notes</th>
+              <th class="w-[17%] px-4 py-3"></th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -127,14 +127,14 @@
               </td>
               <td class="px-4 py-2">
                 <select v-model="form.status" @keydown.enter.prevent="save"
-                  class="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                  class="w-full min-w-0 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500">
                   <option v-for="s in statuses" :key="s" :value="s">{{ s.replace('_', ' ') }}</option>
                 </select>
               </td>
               <td class="px-4 py-2"></td>
               <td class="px-4 py-2">
                 <input v-model="form.applied_at" type="date" @keydown.enter.prevent="save"
-                  class="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                  class="w-full min-w-0 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500" />
               </td>
               <td class="px-4 py-2">
                 <input v-model="form.notes" placeholder="Notes" @keydown.enter.prevent="save"
@@ -172,10 +172,12 @@
                   <span class="text-xs text-gray-400 dark:text-gray-500">{{ job.stage?.name }}</span>
                 </div>
               </td>
-              <td class="px-4 py-3 text-gray-500 dark:text-gray-400">{{ job.applied_at }}</td>
-              <td class="px-4 py-3 text-gray-500 dark:text-gray-400 max-w-xs truncate">{{ job.notes }}</td>
+              <td class="px-4 py-3 text-gray-500 dark:text-gray-400">{{ formatDay(job.applied_at) }}</td>
+              <td class="px-4 py-3 text-gray-500 dark:text-gray-400" :title="job.notes">
+                <div class="truncate">{{ truncateNotes(job.notes) }}</div>
+              </td>
               <td class="px-4 py-3">
-                <div class="flex gap-2 justify-end">
+                <div class="flex flex-nowrap gap-2 justify-end whitespace-nowrap">
                   <button @click="openDetail(job)"
                     class="text-green-600 hover:text-green-800 text-xs font-medium px-2 py-1 rounded hover:bg-green-50 dark:hover:bg-green-900 transition-colors">
                     Detail
@@ -606,8 +608,9 @@ const filteredJobs = computed(() => {
     if (text && !fuzzyMatch(text, j.company) && !fuzzyMatch(text, j.position)) return false
     if (statuses.length && !statuses.includes(j.status)) return false
     if (stageIds.length && !stageIds.includes(j.stage?.name)) return false
-    if (dateFrom && j.applied_at && j.applied_at < dateFrom) return false
-    if (dateTo && j.applied_at && j.applied_at > dateTo) return false
+    const appliedDate = isoToDate(j.applied_at)
+    if (dateFrom && appliedDate && appliedDate < dateFrom) return false
+    if (dateTo && appliedDate && appliedDate > dateTo) return false
     if (archivedOnly.value ? !j.archived_at : (isActiveOnly.value && j.archived_at)) return false
     return true
   })
@@ -711,8 +714,43 @@ const newContact = ref({ name: '', role: '', email: '', phone: '' })
 const pendingContacts = ref([])
 const deletedContactIds = ref([])
 
+// applied_at is edited as a local YYYY-MM-DD (date picker) but stored server-side as a
+// timezone-aware RFC3339 timestamp. These helpers convert between the two representations.
+function todayLocal() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+// applied_at is a calendar date. Take the wall-clock date straight off the stored
+// value (bare YYYY-MM-DD or the date part of an RFC3339 timestamp) instead of routing
+// it through `new Date()`, which would re-project the instant into the viewer's timezone
+// and shift the day for values stored at UTC midnight (e.g. migrated legacy rows).
+function isoToDate(iso) {
+  if (!iso) return ''
+  if (iso.length >= 10 && iso[4] === '-') return iso.slice(0, 10)
+  return ''
+}
+
+function dateToISO(dateStr) {
+  if (!dateStr) return null
+  if (dateStr.includes('T')) return dateStr // already a full timestamp
+  const d = new Date(`${dateStr}T00:00:00`) // local midnight
+  if (isNaN(d)) return null
+  const off = -d.getTimezoneOffset() // minutes east of UTC
+  const sign = off >= 0 ? '+' : '-'
+  const abs = Math.abs(off)
+  const hh = String(Math.floor(abs / 60)).padStart(2, '0')
+  const mm = String(abs % 60).padStart(2, '0')
+  return `${dateStr}T00:00:00${sign}${hh}:${mm}`
+}
+
+// shallow copy of a job payload with applied_at serialized to a timezone-aware timestamp
+function jobBody(obj) {
+  return { ...obj, applied_at: dateToISO(obj.applied_at) }
+}
+
 function emptyForm() {
-  return { id: null, company: '', position: '', status: 'applied', applied_at: new Date().toISOString().slice(0, 10), notes: '', url: '' }
+  return { id: null, company: '', position: '', status: 'applied', applied_at: todayLocal(), notes: '', url: '' }
 }
 
 async function load() {
@@ -731,13 +769,13 @@ async function save() {
     await fetch(`/api/jobs/${form.value.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form.value),
+      body: JSON.stringify(jobBody(form.value)),
     })
   } else {
     await fetch('/api/jobs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form.value),
+      body: JSON.stringify(jobBody(form.value)),
     })
   }
   reset()
@@ -765,7 +803,7 @@ async function setArchived(job, archivedAt) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       company: job.company, position: job.position, status: job.status,
-      applied_at: job.applied_at, notes: job.notes, url: job.url,
+      applied_at: dateToISO(job.applied_at), notes: job.notes, url: job.url,
       archived_at: archivedAt,
     }),
   })
@@ -801,7 +839,25 @@ function stageProgress(job) {
 }
 
 function formatDate(iso) {
-  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+  if (!iso) return ''
+  // treat a bare YYYY-MM-DD as a local wall date (not UTC midnight); full RFC3339
+  // timestamps render in the browser's local timezone
+  const d = new Date(iso.length === 10 && iso[4] === '-' ? `${iso}T00:00:00` : iso)
+  if (isNaN(d)) return ''
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+// applied_at is a calendar date, not an instant: render the stored wall date as-is
+// (see isoToDate) so it never shifts a day for the viewer's timezone.
+function formatDay(iso) {
+  const date = isoToDate(iso)
+  if (!date) return ''
+  return new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+function truncateNotes(notes, max = 60) {
+  if (!notes) return ''
+  return notes.length > max ? `${notes.slice(0, max)}…` : notes
 }
 
 async function openStageDialog(job) {
@@ -826,7 +882,7 @@ async function openDetail(job) {
     fetch(`/api/jobs/${job.id}/stages`).then(r => r.json()),
   ])
   stages.value = stagesData
-  const edit = { company: job.company, position: job.position, status: job.status, applied_at: job.applied_at, notes: job.notes, url: job.url, stage_id: job.stage_id }
+  const edit = { company: job.company, position: job.position, status: job.status, applied_at: isoToDate(job.applied_at), notes: job.notes, url: job.url, stage_id: job.stage_id }
   detailDialog.value = { open: true, job, contacts, logs, edit }
   newContact.value = { name: '', role: '', email: '', phone: '' }
   pendingContacts.value = []
@@ -847,7 +903,7 @@ async function saveDetail() {
     fetch(`/api/jobs/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(edit),
+      body: JSON.stringify(jobBody(edit)),
     }),
     ...pendingContacts.value.map(c => fetch(`/api/jobs/${id}/contacts`, {
       method: 'POST',
@@ -873,7 +929,7 @@ async function confirmStageComment() {
     fetch(`/api/jobs/${jobId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(rest),
+      body: JSON.stringify(jobBody(rest)),
     }),
     ...pendingContacts.value.map(c => fetch(`/api/jobs/${jobId}/contacts`, {
       method: 'POST',

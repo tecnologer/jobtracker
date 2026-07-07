@@ -52,7 +52,7 @@ type Job struct {
 	Company    string            `json:"company"`
 	Position   string            `json:"position"`
 	Status     ApplicationStatus `json:"status"`
-	AppliedAt  string            `json:"applied_at"` // YYYY-MM-DD
+	AppliedAt  *time.Time        `json:"applied_at"` // timezone-aware (RFC3339); nil when unset
 	Notes      string            `json:"notes"`
 	StageID    *uint             `json:"stage_id"`
 	Stage      *Stage            `json:"stage,omitempty" gorm:"foreignKey:StageID"`
