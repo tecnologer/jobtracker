@@ -1,0 +1,16 @@
+# Railway deployment config. Uses the repo-root Dockerfile (multi-stage: builds
+# the Vue frontend + Go binary, serves both on :8080). docker-compose.yml is
+# dev-only and is not used by Railway.
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/healthz"
+healthcheckTimeout = 100
+restartPolicyType = "ON_FAILURE"
+
+# SQLite in this app is single-writer (SetMaxOpenConns(1)). It must NEVER scale
+# beyond one instance — concurrent replicas would corrupt/contend the DB file.
+numReplicas = 1
