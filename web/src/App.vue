@@ -3,6 +3,10 @@
     <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 mb-6 flex items-center justify-between">
       <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Job Tracker</h1>
       <div class="flex gap-2">
+        <a href="/api/jobs/export" download
+          class="text-sm px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+          Export CSV
+        </a>
         <button @click="defaultStagesMgmt = true"
           class="text-sm px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
           Default Stages

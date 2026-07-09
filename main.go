@@ -31,6 +31,7 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/jobs", h.List)
+	mux.HandleFunc("GET /api/jobs/export", h.ExportCSV)
 	mux.HandleFunc("POST /api/jobs", h.Create)
 	mux.HandleFunc("PUT /api/jobs/{id}", h.Update)
 	mux.HandleFunc("DELETE /api/jobs/{id}", h.Delete)

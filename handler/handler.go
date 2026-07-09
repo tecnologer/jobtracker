@@ -1,9 +1,11 @@
 package handler
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/tecnologer/jobtracker/store"
 )
@@ -24,6 +26,56 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(jobs)
+}
+
+// ExportCSV streams every job as a CSV attachment. applied_at is rendered as a
+// wall date (YYYY-MM-DD) in its own stored offset so the day never shifts for
+// the viewer's timezone; created_at is a real instant, rendered in full RFC3339.
+func (h *Handler) ExportCSV(w http.ResponseWriter, r *http.Request) {
+	jobs, err := h.store.List()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
+	w.Header().Set("Content-Disposition", `attachment; filename="jobs-`+time.Now().Format("2006-01-02")+`.csv"`)
+
+	cw := csv.NewWriter(w)
+	defer cw.Flush()
+
+	if err := cw.Write([]string{"ID", "Company", "Position", "Status", "Stage", "Applied At", "Archived", "URL", "Notes", "Created At"}); err != nil {
+		return
+	}
+
+	for _, job := range jobs {
+		appliedAt := ""
+		if job.AppliedAt != nil {
+			appliedAt = job.AppliedAt.Format("2006-01-02")
+		}
+		stageName := ""
+		if job.Stage != nil {
+			stageName = job.Stage.Name
+		}
+		archived := ""
+		if job.ArchivedAt != nil {
+			archived = "yes"
+		}
+		if err := cw.Write([]string{
+			strconv.FormatUint(uint64(job.ID), 10),
+			job.Company,
+			job.Position,
+			string(job.Status),
+			stageName,
+			appliedAt,
+			archived,
+			job.URL,
+			job.Notes,
+			job.CreatedAt.Format(time.RFC3339),
+		}); err != nil {
+			return
+		}
+	}
 }
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
