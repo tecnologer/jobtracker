@@ -5,6 +5,25 @@ Track job applications — Go REST API + Vue 3 SPA.
 <img width="1197" height="628" alt="image" src="https://github.com/user-attachments/assets/e216a7f7-6ab2-4c50-b913-0123d9d73194" />
 
 
+## Authentication
+
+The entire app — all `/api/*` routes and the static SPA — is gated behind HTTP
+Basic Auth. Credentials are read from two required environment variables at
+startup; the server refuses to start (`log.Fatal`) if either is unset:
+
+| Variable        | Description                                      |
+| --------------- | ------------------------------------------------ |
+| `AUTH_EMAIL`    | Basic Auth username (the login email).           |
+| `AUTH_PASSWORD` | Basic Auth password.                             |
+
+The browser's native login dialog handles the prompt — there is no custom login
+UI. The only unauthenticated route is `GET /healthz`, which returns `200 ok` for
+container healthchecks.
+
+```bash
+AUTH_EMAIL=you@example.com AUTH_PASSWORD=secret go run .
+```
+
 ## Run manually
 
 **Requirements:** Go 1.22+, Node 20+
@@ -101,3 +120,16 @@ The PVC is deleted with it. To keep your data, remove the PVC from the delete co
 ```bash
 kubectl delete deployment,service jobtracker
 ```
+
+## Deploy to Railway
+
+Railway builds from the repo-root `Dockerfile` (config in `railway.toml`), which
+builds the Vue frontend and Go binary and serves both on `:8080`.
+
+- **Volume**: mount a persistent volume (e.g. at `/data`) for the SQLite file.
+- **`DB_PATH`**: set to a path inside that volume, e.g. `/data/jobs.db`, so data
+  survives redeploys.
+- **`AUTH_EMAIL` / `AUTH_PASSWORD`**: set the basic-auth credentials (see
+  `.env.example`).
+- **Healthcheck**: `/healthz` (no auth required).
+- **Replicas**: keep at **1** — SQLite is single-writer and must never scale out.
