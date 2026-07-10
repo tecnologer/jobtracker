@@ -1,40 +1,74 @@
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 mb-6 flex items-center justify-between">
-      <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Job Tracker</h1>
+      <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
+        Job Tracker
+      </h1>
       <div class="flex gap-2">
-        <a href="/api/jobs/export" download
-          class="text-sm px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <a
+          href="/api/jobs/export"
+          download
+          class="text-sm px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        >
           Export CSV
         </a>
         <div class="relative">
-          <button @click="upcomingMeetingsOpen = !upcomingMeetingsOpen"
-            class="text-sm px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+          <button
+            class="text-sm px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            @click="upcomingMeetingsOpen = !upcomingMeetingsOpen"
+          >
             Upcoming meetings
-            <span v-if="upcomingMeetings.length"
-              class="ml-1 inline-flex items-center justify-center text-xs bg-blue-600 text-white rounded-full h-4 min-w-4 px-1 leading-none align-middle">
+            <span
+              v-if="upcomingMeetings.length"
+              class="ml-1 inline-flex items-center justify-center text-xs bg-blue-600 text-white rounded-full h-4 min-w-4 px-1 leading-none align-middle"
+            >
               {{ upcomingMeetings.length }}
             </span>
           </button>
-          <div v-if="upcomingMeetingsOpen"
-            class="absolute z-20 top-full mt-1 right-0 w-80 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg py-1 max-h-96 overflow-y-auto">
-            <p v-if="!upcomingMeetings.length" class="px-3 py-2 text-xs text-gray-400 dark:text-gray-500">No upcoming meetings</p>
-            <button v-for="m in upcomingMeetings" :key="m.id" @click="openMeetingFromDropdown(m)"
+          <div
+            v-if="upcomingMeetingsOpen"
+            class="absolute z-20 top-full mt-1 right-0 w-80 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg py-1 max-h-96 overflow-y-auto"
+          >
+            <p
+              v-if="!upcomingMeetings.length"
+              class="px-3 py-2 text-xs text-gray-400 dark:text-gray-500"
+            >
+              No upcoming meetings
+            </p>
+            <button
+              v-for="m in upcomingMeetings"
+              :key="m.id"
               :class="isUrgent(m.scheduled_at) ? 'bg-amber-50 dark:bg-amber-900/30' : ''"
-              class="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-              <div class="text-sm font-medium text-gray-800 dark:text-gray-100">{{ m.job?.company }} — {{ m.job?.position }}</div>
-              <div class="text-xs text-gray-600 dark:text-gray-300">{{ m.title }}</div>
-              <div class="text-xs text-gray-400 dark:text-gray-500">{{ formatDate(m.scheduled_at) }}</div>
+              class="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+              @click="openMeetingFromDropdown(m)"
+            >
+              <div class="text-sm font-medium text-gray-800 dark:text-gray-100">
+                {{ m.job?.company }} — {{ m.job?.position }}
+              </div>
+              <div class="text-xs text-gray-600 dark:text-gray-300">
+                {{ m.title }}
+              </div>
+              <div class="text-xs text-gray-400 dark:text-gray-500">
+                {{ formatDate(m.scheduled_at) }}
+              </div>
             </button>
           </div>
-          <div v-if="upcomingMeetingsOpen" class="fixed inset-0 z-10" @click="upcomingMeetingsOpen = false" />
+          <div
+            v-if="upcomingMeetingsOpen"
+            class="fixed inset-0 z-10"
+            @click="upcomingMeetingsOpen = false"
+          />
         </div>
-        <button @click="defaultStagesMgmt = true"
-          class="text-sm px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <button
+          class="text-sm px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          @click="defaultStagesMgmt = true"
+        >
           Default Stages
         </button>
-        <button @click="toggleDark"
-          class="text-sm px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <button
+          class="text-sm px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          @click="toggleDark"
+        >
           {{ dark ? '☀ Light' : '☾ Dark' }}
         </button>
       </div>
@@ -44,45 +78,75 @@
       <!-- Filters -->
       <div class="mb-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2">
         <div class="flex items-center gap-2">
-          <button @click="filtersOpen = !filtersOpen"
-            class="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors select-none py-1 flex-1">
-            <svg :class="filtersOpen ? 'rotate-90' : ''" class="w-4 h-4 shrink-0 transition-transform text-gray-500 dark:text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd"/></svg>
+          <button
+            class="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors select-none py-1 flex-1"
+            @click="filtersOpen = !filtersOpen"
+          >
+            <svg
+              :class="filtersOpen ? 'rotate-90' : ''"
+              class="w-4 h-4 shrink-0 transition-transform text-gray-500 dark:text-gray-400"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              aria-hidden="true"
+            ><path
+              fill-rule="evenodd"
+              d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+              clip-rule="evenodd"
+            /></svg>
             Filters
-            <span v-if="isFiltered" class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded-full px-1.5 py-0.5 font-medium leading-none">{{ activeFilterCount }}</span>
+            <span
+              v-if="isFiltered"
+              class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded-full px-1.5 py-0.5 font-medium leading-none"
+            >{{ activeFilterCount }}</span>
           </button>
-          <button @click="toggleArchivedOnly"
+          <button
             :class="archivedOnly ? 'bg-amber-100 dark:bg-amber-900 text-amber-600 dark:text-amber-300 ring-2 ring-current' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'"
-            class="text-xs px-2.5 py-1 rounded-full font-medium transition-colors shrink-0">
+            class="text-xs px-2.5 py-1 rounded-full font-medium transition-colors shrink-0"
+            @click="toggleArchivedOnly"
+          >
             Archived only
           </button>
-          <button @click="toggleActiveOnly"
+          <button
             :class="isActiveOnly ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 ring-2 ring-current' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'"
-            class="text-xs px-2.5 py-1 rounded-full font-medium transition-colors shrink-0">
+            class="text-xs px-2.5 py-1 rounded-full font-medium transition-colors shrink-0"
+            @click="toggleActiveOnly"
+          >
             Active only
           </button>
-          <button @click="toggleTopMatchOnly"
+          <button
             :class="topMatchOnly ? 'bg-amber-100 dark:bg-amber-900 text-amber-600 dark:text-amber-300 ring-2 ring-current' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'"
-            class="text-xs px-2.5 py-1 rounded-full font-medium transition-colors shrink-0">
+            class="text-xs px-2.5 py-1 rounded-full font-medium transition-colors shrink-0"
+            @click="toggleTopMatchOnly"
+          >
             Top matches
           </button>
         </div>
 
-        <div v-show="filtersOpen" class="flex flex-col gap-2 mt-2 pb-2">
+        <div
+          v-show="filtersOpen"
+          class="flex flex-col gap-2 mt-2 pb-2"
+        >
           <div class="flex flex-col gap-1">
             <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Company or Position</label>
-            <input v-model="filter.text" placeholder="Company or position…"
-              class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <input
+              v-model="filter.text"
+              placeholder="Company or position…"
+              class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
           </div>
 
           <!-- Row 2: status chips -->
           <div class="flex items-center gap-1.5 flex-wrap select-none">
             <span class="text-xs text-gray-400 dark:text-gray-500">Status:</span>
-            <button v-for="s in statuses" :key="s"
+            <button
+              v-for="s in statuses"
+              :key="s"
+              :class="filter.statuses.includes(s) ? statusClass(s) + ' ring-2 ring-offset-1 ring-current' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'"
+              class="px-2 py-0.5 rounded-full text-xs font-medium transition-colors cursor-pointer"
               @mousedown.prevent="chipMousedown(filter.statuses, s)"
               @mouseenter="chipMouseenter(filter.statuses, s)"
               @dragstart.prevent
-              :class="filter.statuses.includes(s) ? statusClass(s) + ' ring-2 ring-offset-1 ring-current' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'"
-              class="px-2 py-0.5 rounded-full text-xs font-medium transition-colors cursor-pointer">
+            >
               {{ s.replace('_', ' ') }}
             </button>
           </div>
@@ -92,40 +156,82 @@
             <div class="flex items-center gap-1.5">
               <span class="text-xs text-gray-400 dark:text-gray-500">Stage:</span>
               <div class="relative">
-                <button @click="stageDropdownOpen = !stageDropdownOpen"
-                  class="flex items-center justify-between gap-1 w-44 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1 text-xs bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                <button
+                  class="flex items-center justify-between gap-1 w-44 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1 text-xs bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  @click="stageDropdownOpen = !stageDropdownOpen"
+                >
                   Stage{{ filter.stages.length ? ` (${filter.stages.length})` : '' }}
                   <span class="text-gray-400">▾</span>
                 </button>
-                <div v-if="stageDropdownOpen" class="absolute z-20 top-full mt-1 min-w-36 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg py-1">
-                  <div v-if="allFilterStages.length" class="px-2 pt-1.5 pb-1 relative">
-                    <input v-model="stageSearch" placeholder="Filter stages…"
-                      class="w-full border border-gray-200 dark:border-gray-600 rounded px-2 py-1 pr-6 text-xs bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-purple-400" />
-                    <button v-if="stageSearch" @click="stageSearch = ''"
-                      class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 leading-none">✕</button>
+                <div
+                  v-if="stageDropdownOpen"
+                  class="absolute z-20 top-full mt-1 min-w-36 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg py-1"
+                >
+                  <div
+                    v-if="allFilterStages.length"
+                    class="px-2 pt-1.5 pb-1 relative"
+                  >
+                    <input
+                      v-model="stageSearch"
+                      placeholder="Filter stages…"
+                      class="w-full border border-gray-200 dark:border-gray-600 rounded px-2 py-1 pr-6 text-xs bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-purple-400"
+                    >
+                    <button
+                      v-if="stageSearch"
+                      class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 leading-none"
+                      @click="stageSearch = ''"
+                    >
+                      ✕
+                    </button>
                   </div>
-                  <p v-if="!filteredDropdownStages.length" class="px-3 py-1.5 text-xs text-gray-400">{{ allFilterStages.length ? 'No match' : 'No stages configured' }}</p>
-                  <label v-for="s in filteredDropdownStages" :key="s.id"
-                    class="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer text-sm text-gray-700 dark:text-gray-200">
-                    <input type="checkbox" :value="s.name" v-model="filter.stages" class="rounded accent-purple-500" />
-                    <span v-html="highlight(stageSearch, s.name)"></span>
+                  <p
+                    v-if="!filteredDropdownStages.length"
+                    class="px-3 py-1.5 text-xs text-gray-400"
+                  >
+                    {{ allFilterStages.length ? 'No match' : 'No stages configured' }}
+                  </p>
+                  <label
+                    v-for="s in filteredDropdownStages"
+                    :key="s.id"
+                    class="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer text-sm text-gray-700 dark:text-gray-200"
+                  >
+                    <input
+                      v-model="filter.stages"
+                      type="checkbox"
+                      :value="s.name"
+                      class="rounded accent-purple-500"
+                    >
+                    <span v-html="highlight(stageSearch, s.name)" />
                   </label>
                 </div>
-                <div v-if="stageDropdownOpen" class="fixed inset-0 z-10" @click="stageDropdownOpen = false" />
+                <div
+                  v-if="stageDropdownOpen"
+                  class="fixed inset-0 z-10"
+                  @click="stageDropdownOpen = false"
+                />
               </div>
             </div>
 
             <div class="flex items-center gap-1.5 flex-1">
               <span class="text-xs text-gray-400 dark:text-gray-500 shrink-0">Applied:</span>
-              <input v-model="filter.dateFrom" type="date"
-                class="flex-1 min-w-0 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-xs bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+              <input
+                v-model="filter.dateFrom"
+                type="date"
+                class="flex-1 min-w-0 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-xs bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
               <span class="text-xs text-gray-400 shrink-0">–</span>
-              <input v-model="filter.dateTo" type="date"
-                class="flex-1 min-w-0 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-xs bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+              <input
+                v-model="filter.dateTo"
+                type="date"
+                class="flex-1 min-w-0 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-xs bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
             </div>
 
-            <button v-if="isFiltered" @click="clearFilter"
-              class="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 underline transition-colors">
+            <button
+              v-if="isFiltered"
+              class="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 underline transition-colors"
+              @click="clearFilter"
+            >
               Clear
             </button>
           </div>
@@ -137,119 +243,264 @@
         <table class="w-full table-fixed text-sm">
           <thead class="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
             <tr>
-              <th class="w-[12%] text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">Company</th>
-              <th class="w-[20%] text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">Position</th>
-              <th class="w-[9%] text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">Status</th>
-              <th class="w-[12%] text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">Stage</th>
-              <th class="w-[14%] text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">Applied</th>
-              <th class="w-[22%] text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">Notes</th>
-              <th class="w-[12%] px-2 py-3"></th>
+              <th class="w-[12%] text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">
+                Company
+              </th>
+              <th class="w-[20%] text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">
+                Position
+              </th>
+              <th class="w-[9%] text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">
+                Status
+              </th>
+              <th class="w-[12%] text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">
+                Stage
+              </th>
+              <th class="w-[14%] text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">
+                Applied
+              </th>
+              <th class="w-[22%] text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">
+                Notes
+              </th>
+              <th class="w-[12%] px-2 py-3" />
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
             <tr class="bg-blue-50/40 dark:bg-blue-900/10 border-b-2 border-blue-100 dark:border-blue-800">
               <td class="px-4 py-2">
-                <input ref="companyInput" v-model="form.company" placeholder="Company" @keydown.enter.prevent="save"
-                  class="w-full border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-300 dark:placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <input
+                  ref="companyInput"
+                  v-model="form.company"
+                  placeholder="Company"
+                  class="w-full border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-300 dark:placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  @keydown.enter.prevent="save"
+                >
               </td>
               <td class="px-4 py-2">
-                <input v-model="form.position" placeholder="Position" @keydown.enter.prevent="save"
-                  class="w-full border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-300 dark:placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <input
+                  v-model="form.position"
+                  placeholder="Position"
+                  class="w-full border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-300 dark:placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  @keydown.enter.prevent="save"
+                >
               </td>
               <td class="px-4 py-2">
-                <select v-model="form.status" @keydown.enter.prevent="save"
-                  class="w-full min-w-0 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                  <option v-for="s in statuses" :key="s" :value="s">{{ s.replace('_', ' ') }}</option>
+                <select
+                  v-model="form.status"
+                  class="w-full min-w-0 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  @keydown.enter.prevent="save"
+                >
+                  <option
+                    v-for="s in statuses"
+                    :key="s"
+                    :value="s"
+                  >
+                    {{ s.replace('_', ' ') }}
+                  </option>
                 </select>
               </td>
-              <td class="px-4 py-2"></td>
+              <td class="px-4 py-2" />
               <td class="px-4 py-2">
-                <input v-model="form.applied_at" type="date" @keydown.enter.prevent="save"
-                  class="w-full min-w-0 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <input
+                  v-model="form.applied_at"
+                  type="date"
+                  class="w-full min-w-0 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  @keydown.enter.prevent="save"
+                >
               </td>
               <td class="px-4 py-2">
-                <input v-model="form.notes" placeholder="Notes" @keydown.enter.prevent="save"
-                  class="w-full border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-300 dark:placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <input
+                  v-model="form.notes"
+                  placeholder="Notes"
+                  class="w-full border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-300 dark:placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  @keydown.enter.prevent="save"
+                >
               </td>
               <td class="px-4 py-2 text-right pr-3">
-                <button @click="save"
-                  class="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded">Add</button>
+                <button
+                  class="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded"
+                  @click="save"
+                >
+                  Add
+                </button>
               </td>
             </tr>
             <tr v-if="filteredJobs.length === 0">
-              <td colspan="7" class="text-center px-4 py-10 text-gray-400 dark:text-gray-500">
+              <td
+                colspan="7"
+                class="text-center px-4 py-10 text-gray-400 dark:text-gray-500"
+              >
                 {{ jobs.length === 0 ? 'No applications yet.' : 'No results match your filters.' }}
               </td>
             </tr>
-            <tr v-for="job in filteredJobs" :key="job.id" @dblclick="onRowDblClick($event, job)"
-              class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+            <tr
+              v-for="job in filteredJobs"
+              :key="job.id"
+              class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              @dblclick="onRowDblClick($event, job)"
+            >
               <td class="px-4 py-3 font-medium text-gray-800 dark:text-gray-100">
                 <div class="flex items-center gap-1.5">
-                  <button @click.stop="toggleTopMatch(job)"
+                  <button
                     :title="job.top_match ? 'Remove top match' : 'Mark as top match'"
                     :aria-label="job.top_match ? 'Remove top match' : 'Mark as top match'"
-                    class="shrink-0">
-                    <svg :class="job.top_match ? 'text-amber-500 fill-current' : 'text-gray-400 dark:text-gray-500 fill-none stroke-current'"
-                      class="w-4 h-4" viewBox="0 0 20 20" stroke-width="1.5">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                    class="shrink-0"
+                    @click.stop="toggleTopMatch(job)"
+                  >
+                    <svg
+                      :class="job.top_match ? 'text-amber-500 fill-current' : 'text-gray-400 dark:text-gray-500 fill-none stroke-current'"
+                      class="w-4 h-4"
+                      viewBox="0 0 20 20"
+                      stroke-width="1.5"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                      />
                     </svg>
                   </button>
-                  <span v-html="highlight(filter.text, job.company)"></span>
+                  <span v-html="highlight(filter.text, job.company)" />
                 </div>
               </td>
               <td class="px-4 py-3 text-gray-700 dark:text-gray-300">
-                <a v-if="job.url" :href="job.url" target="_blank" rel="noopener"
-                  class="text-blue-600 dark:text-blue-400 hover:underline" v-html="highlight(filter.text, job.position)"></a>
-                <span v-else v-html="highlight(filter.text, job.position)"></span>
+                <a
+                  v-if="job.url"
+                  :href="job.url"
+                  target="_blank"
+                  rel="noopener"
+                  class="text-blue-600 dark:text-blue-400 hover:underline"
+                  v-html="highlight(filter.text, job.position)"
+                />
+                <span
+                  v-else
+                  v-html="highlight(filter.text, job.position)"
+                />
               </td>
               <td class="px-4 py-3">
-                <span :class="statusClass(job.status)"
-                  class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold">
+                <span
+                  :class="statusClass(job.status)"
+                  class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold"
+                >
                   {{ job.status.replace('_', ' ') }}
                 </span>
               </td>
               <td class="px-4 py-3">
                 <div class="flex flex-col gap-1 min-w-32 max-w-40">
-                  <div class="h-1.5 w-full bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden" :title="job.stage?.name">
-                    <div v-if="job.stage_id" class="h-full bg-purple-500 rounded-full transition-all"
-                      :style="`width: ${stageProgress(job)}%`"></div>
+                  <div
+                    class="h-1.5 w-full bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden"
+                    :title="job.stage?.name"
+                  >
+                    <div
+                      v-if="job.stage_id"
+                      class="h-full bg-purple-500 rounded-full transition-all"
+                      :style="`width: ${stageProgress(job)}%`"
+                    />
                   </div>
                   <span class="text-xs text-gray-400 dark:text-gray-500">{{ job.stage?.name }}</span>
                 </div>
               </td>
-              <td class="px-4 py-3 text-gray-500 dark:text-gray-400">{{ formatDay(job.applied_at) }}</td>
-              <td class="px-4 py-3 text-gray-500 dark:text-gray-400" :title="job.notes">
-                <div class="truncate">{{ truncateNotes(job.notes) }}</div>
+              <td class="px-4 py-3 text-gray-500 dark:text-gray-400">
+                {{ formatDay(job.applied_at) }}
+              </td>
+              <td
+                class="px-4 py-3 text-gray-500 dark:text-gray-400"
+                :title="job.notes"
+              >
+                <div class="truncate">
+                  {{ truncateNotes(job.notes) }}
+                </div>
               </td>
               <td class="px-2 py-3">
                 <div class="flex flex-nowrap items-center gap-1 justify-end whitespace-nowrap">
-                  <button @click="openDetail(job)"
-                    aria-label="View details" title="View details"
-                    class="inline-flex items-center justify-center p-2 rounded text-green-600 hover:text-green-800 hover:bg-green-50 dark:hover:bg-green-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 transition-colors">
-                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <button
+                    aria-label="View details"
+                    title="View details"
+                    class="inline-flex items-center justify-center p-2 rounded text-green-600 hover:text-green-800 hover:bg-green-50 dark:hover:bg-green-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 transition-colors"
+                    @click="openDetail(job)"
+                  >
+                    <svg
+                      class="w-4 h-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      aria-hidden="true"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
+                      />
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
                     </svg>
                   </button>
-                  <button v-if="job.archived_at" @click="unarchive(job)"
-                    aria-label="Unarchive" title="Unarchive"
-                    class="inline-flex items-center justify-center p-2 rounded text-amber-600 hover:text-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 transition-colors">
-                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 7.5L12 3m0 0L7.5 7.5M12 3v13.5" />
+                  <button
+                    v-if="job.archived_at"
+                    aria-label="Unarchive"
+                    title="Unarchive"
+                    class="inline-flex items-center justify-center p-2 rounded text-amber-600 hover:text-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 transition-colors"
+                    @click="unarchive(job)"
+                  >
+                    <svg
+                      class="w-4 h-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      aria-hidden="true"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 7.5L12 3m0 0L7.5 7.5M12 3v13.5"
+                      />
                     </svg>
                   </button>
-                  <button v-else @click="archive(job)"
-                    aria-label="Archive" title="Archive"
-                    class="inline-flex items-center justify-center p-2 rounded text-amber-600 hover:text-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 transition-colors">
-                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                  <button
+                    v-else
+                    aria-label="Archive"
+                    title="Archive"
+                    class="inline-flex items-center justify-center p-2 rounded text-amber-600 hover:text-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 transition-colors"
+                    @click="archive(job)"
+                  >
+                    <svg
+                      class="w-4 h-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      aria-hidden="true"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"
+                      />
                     </svg>
                   </button>
-                  <button @click="remove(job.id)"
-                    aria-label="Delete" title="Delete"
-                    class="inline-flex items-center justify-center p-2 rounded text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition-colors">
-                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                  <button
+                    aria-label="Delete"
+                    title="Delete"
+                    class="inline-flex items-center justify-center p-2 rounded text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition-colors"
+                    @click="remove(job.id)"
+                  >
+                    <svg
+                      class="w-4 h-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      aria-hidden="true"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -261,38 +512,68 @@
     </main>
 
     <!-- Stage Update Dialog -->
-    <div v-if="stageDialog.open" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div
+      v-if="stageDialog.open"
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+    >
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-md">
         <div class="flex justify-between items-center mb-4">
           <h3 class="font-semibold text-gray-800 dark:text-gray-100">
             {{ stageDialog.job.company }} — {{ stageDialog.job.position }}
           </h3>
-          <button @click="stageDialog.open = false"
-            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg leading-none">✕</button>
+          <button
+            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg leading-none"
+            @click="stageDialog.open = false"
+          >
+            ✕
+          </button>
         </div>
         <div class="flex flex-col gap-3">
           <div class="flex flex-col gap-1">
             <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Stage</label>
-            <select v-model="stageDialog.stageId"
-              class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option v-for="s in stages" :key="s.id" :value="s.id">{{ s.name }}</option>
+            <select
+              v-model="stageDialog.stageId"
+              class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option
+                v-for="s in stages"
+                :key="s.id"
+                :value="s.id"
+              >
+                {{ s.name }}
+              </option>
             </select>
           </div>
           <div class="flex flex-col gap-1">
             <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Notes</label>
-            <textarea v-model="stageDialog.notes" rows="3" placeholder="How did it go?"
-              class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+            <textarea
+              v-model="stageDialog.notes"
+              rows="3"
+              placeholder="How did it go?"
+              class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            />
           </div>
-          <button @click="submitStageUpdate"
-            class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+          <button
+            class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            @click="submitStageUpdate"
+          >
             Save
           </button>
         </div>
-        <div v-if="stageDialog.logs.length" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">History</p>
+        <div
+          v-if="stageDialog.logs.length"
+          class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700"
+        >
+          <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+            History
+          </p>
           <ul class="space-y-3 max-h-48 overflow-y-auto pr-1">
-            <li v-for="log in stageDialog.logs" :key="log.id" class="flex gap-3 text-sm">
-              <div class="w-1.5 h-1.5 rounded-full bg-purple-400 mt-1.5 shrink-0"></div>
+            <li
+              v-for="log in stageDialog.logs"
+              :key="log.id"
+              class="flex gap-3 text-sm"
+            >
+              <div class="w-1.5 h-1.5 rounded-full bg-purple-400 mt-1.5 shrink-0" />
               <div>
                 <div class="flex items-center gap-2">
                   <span class="text-xs text-gray-400 dark:text-gray-500">{{ log.prev_stage?.name ?? 'No stage' }}</span>
@@ -300,7 +581,12 @@
                   <span class="font-medium text-gray-700 dark:text-gray-300">{{ log.stage?.name ?? 'No stage' }}</span>
                   <span class="text-xs text-gray-400 dark:text-gray-500">{{ formatDate(log.created_at) }}</span>
                 </div>
-                <p v-if="log.notes" class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ log.notes }}</p>
+                <p
+                  v-if="log.notes"
+                  class="text-xs text-gray-500 dark:text-gray-400 mt-0.5"
+                >
+                  {{ log.notes }}
+                </p>
               </div>
             </li>
           </ul>
@@ -309,91 +595,159 @@
     </div>
 
     <!-- Detail Dialog -->
-    <div v-if="detailDialog.open" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div
+      v-if="detailDialog.open"
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+    >
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-[62vw] max-h-[90vh] overflow-y-auto">
         <div class="flex justify-between items-start mb-4 gap-3">
           <div class="flex-1 flex flex-col gap-2">
             <div class="flex gap-2">
               <div class="flex flex-col gap-1 flex-1">
                 <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Company</label>
-                <input v-model="detailDialog.edit.company" placeholder="Company"
-                  class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm font-semibold bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input
+                  v-model="detailDialog.edit.company"
+                  placeholder="Company"
+                  class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm font-semibold bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
               </div>
               <div class="flex flex-col gap-1 flex-1">
                 <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Position</label>
-                <input v-model="detailDialog.edit.position" placeholder="Position"
-                  class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input
+                  v-model="detailDialog.edit.position"
+                  placeholder="Position"
+                  class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
               </div>
             </div>
             <div class="flex items-end gap-2">
               <div class="flex flex-col gap-1">
                 <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Status</label>
-                <select v-model="detailDialog.edit.status"
-                  class="border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 text-xs bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option v-for="s in statuses" :key="s" :value="s">{{ s.replace('_', ' ') }}</option>
+                <select
+                  v-model="detailDialog.edit.status"
+                  class="border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 text-xs bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option
+                    v-for="s in statuses"
+                    :key="s"
+                    :value="s"
+                  >
+                    {{ s.replace('_', ' ') }}
+                  </option>
                 </select>
               </div>
               <div class="flex flex-col gap-1">
                 <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Stage</label>
                 <div class="flex items-center gap-1">
-                  <select v-model="detailDialog.edit.stage_id"
-                    class="border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 text-xs bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option :value="0">No stage</option>
-                    <option v-for="s in stages" :key="s.id" :value="s.id">{{ s.name }}</option>
+                  <select
+                    v-model="detailDialog.edit.stage_id"
+                    class="border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 text-xs bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option :value="0">
+                      No stage
+                    </option>
+                    <option
+                      v-for="s in stages"
+                      :key="s.id"
+                      :value="s.id"
+                    >
+                      {{ s.name }}
+                    </option>
                   </select>
-                  <button @click="stagesMgmt = true" title="Manage stages"
-                    class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors leading-none">
+                  <button
+                    title="Manage stages"
+                    class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors leading-none"
+                    @click="stagesMgmt = true"
+                  >
                     &#9881;
                   </button>
                 </div>
               </div>
               <div class="flex flex-col gap-1">
                 <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Applied</label>
-                <input v-model="detailDialog.edit.applied_at" type="date"
-                  class="border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 text-xs bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input
+                  v-model="detailDialog.edit.applied_at"
+                  type="date"
+                  class="border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 text-xs bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
               </div>
             </div>
           </div>
           <div class="flex items-center gap-2 shrink-0">
-            <button @click="toggleTopMatch(detailDialog.job)"
+            <button
               :title="detailDialog.job.top_match ? 'Remove top match' : 'Mark as top match'"
-              :aria-label="detailDialog.job.top_match ? 'Remove top match' : 'Mark as top match'">
-              <svg :class="detailDialog.job.top_match ? 'text-amber-500 fill-current' : 'text-gray-400 dark:text-gray-500 fill-none stroke-current'"
-                class="w-5 h-5" viewBox="0 0 20 20" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+              :aria-label="detailDialog.job.top_match ? 'Remove top match' : 'Mark as top match'"
+              @click="toggleTopMatch(detailDialog.job)"
+            >
+              <svg
+                :class="detailDialog.job.top_match ? 'text-amber-500 fill-current' : 'text-gray-400 dark:text-gray-500 fill-none stroke-current'"
+                class="w-5 h-5"
+                viewBox="0 0 20 20"
+                stroke-width="1.5"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                />
               </svg>
             </button>
-            <button @click="detailDialog.open = false"
-              class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg leading-none">✕</button>
+            <button
+              class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg leading-none"
+              @click="detailDialog.open = false"
+            >
+              ✕
+            </button>
           </div>
         </div>
 
         <div class="mb-4 pb-4 border-b border-gray-100 dark:border-gray-700 flex flex-col gap-2">
           <div class="flex flex-col gap-1">
             <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Notes</label>
-            <textarea v-model="detailDialog.edit.notes" rows="2" placeholder="Notes"
-              class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+            <textarea
+              v-model="detailDialog.edit.notes"
+              rows="2"
+              placeholder="Notes"
+              class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            />
           </div>
           <div class="flex flex-col gap-1">
             <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Job URL</label>
             <div class="flex gap-2 items-center">
-              <input v-model="detailDialog.edit.url" type="url" placeholder="https://..."
-                class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              <a :href="detailDialog.edit.url || '#'" target="_blank" rel="noopener"
+              <input
+                v-model="detailDialog.edit.url"
+                type="url"
+                placeholder="https://..."
+                class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+              <a
+                :href="detailDialog.edit.url || '#'"
+                target="_blank"
+                rel="noopener"
                 :class="detailDialog.edit.url ? 'text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 cursor-pointer' : 'text-blue-500 dark:text-blue-400 opacity-25 pointer-events-none'"
                 :aria-disabled="!detailDialog.edit.url"
                 title="Open job URL"
-                class="text-lg leading-none transition-colors shrink-0">&#128279;</a>
+                class="text-lg leading-none transition-colors shrink-0"
+              >&#128279;</a>
             </div>
           </div>
         </div>
 
         <!-- Stage log -->
         <div class="mb-4 pb-4 border-b border-gray-100 dark:border-gray-700">
-          <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Stage History</p>
-          <ul v-if="detailDialog.logs.length" class="space-y-3 max-h-40 overflow-y-auto pr-1">
-            <li v-for="log in detailDialog.logs" :key="log.id" class="flex gap-3 text-sm">
-              <div class="w-1.5 h-1.5 rounded-full bg-purple-400 mt-1.5 shrink-0"></div>
+          <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+            Stage History
+          </p>
+          <ul
+            v-if="detailDialog.logs.length"
+            class="space-y-3 max-h-40 overflow-y-auto pr-1"
+          >
+            <li
+              v-for="log in detailDialog.logs"
+              :key="log.id"
+              class="flex gap-3 text-sm"
+            >
+              <div class="w-1.5 h-1.5 rounded-full bg-purple-400 mt-1.5 shrink-0" />
               <div>
                 <div class="flex items-center gap-2">
                   <span class="text-xs text-gray-400 dark:text-gray-500">{{ log.prev_stage?.name ?? 'No stage' }}</span>
@@ -401,70 +755,149 @@
                   <span class="font-medium text-gray-700 dark:text-gray-300">{{ log.stage?.name ?? 'No stage' }}</span>
                   <span class="text-xs text-gray-400 dark:text-gray-500">{{ formatDate(log.created_at) }}</span>
                 </div>
-                <p v-if="log.notes" class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ log.notes }}</p>
+                <p
+                  v-if="log.notes"
+                  class="text-xs text-gray-500 dark:text-gray-400 mt-0.5"
+                >
+                  {{ log.notes }}
+                </p>
               </div>
             </li>
           </ul>
-          <p v-else class="text-sm text-gray-400 dark:text-gray-500">No stage history yet.</p>
+          <p
+            v-else
+            class="text-sm text-gray-400 dark:text-gray-500"
+          >
+            No stage history yet.
+          </p>
         </div>
 
         <!-- Contacts -->
         <div>
-          <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Contacts</p>
-          <ul v-if="detailDialog.contacts.length || pendingContacts.length" class="space-y-2 mb-4 max-h-40 overflow-y-auto pr-1">
-            <li v-for="c in detailDialog.contacts" :key="c.id"
-              class="flex items-start justify-between gap-2 text-sm border border-gray-100 dark:border-gray-700 rounded-lg px-3 py-2">
+          <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+            Contacts
+          </p>
+          <ul
+            v-if="detailDialog.contacts.length || pendingContacts.length"
+            class="space-y-2 mb-4 max-h-40 overflow-y-auto pr-1"
+          >
+            <li
+              v-for="c in detailDialog.contacts"
+              :key="c.id"
+              class="flex items-start justify-between gap-2 text-sm border border-gray-100 dark:border-gray-700 rounded-lg px-3 py-2"
+            >
               <div>
                 <span class="font-medium text-gray-800 dark:text-gray-100">{{ c.name }}</span>
-                <span v-if="c.role" class="text-xs text-gray-500 dark:text-gray-400 ml-1">({{ c.role }})</span>
+                <span
+                  v-if="c.role"
+                  class="text-xs text-gray-500 dark:text-gray-400 ml-1"
+                >({{ c.role }})</span>
                 <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 space-x-2">
                   <span v-if="c.email">{{ c.email }}</span>
                   <span v-if="c.phone">{{ c.phone }}</span>
                 </div>
               </div>
-              <button @click="removeContact(c.id)"
-                aria-label="Remove contact" title="Remove contact"
-                class="inline-flex items-center justify-center p-1.5 rounded text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition-colors shrink-0">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+              <button
+                aria-label="Remove contact"
+                title="Remove contact"
+                class="inline-flex items-center justify-center p-1.5 rounded text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition-colors shrink-0"
+                @click="removeContact(c.id)"
+              >
+                <svg
+                  class="w-3.5 h-3.5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  aria-hidden="true"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+                  />
                 </svg>
               </button>
             </li>
-            <li v-for="(c, i) in pendingContacts" :key="'p'+i"
-              class="flex items-start justify-between gap-2 text-sm border border-dashed border-blue-300 dark:border-blue-600 rounded-lg px-3 py-2 opacity-70">
+            <li
+              v-for="(c, i) in pendingContacts"
+              :key="'p'+i"
+              class="flex items-start justify-between gap-2 text-sm border border-dashed border-blue-300 dark:border-blue-600 rounded-lg px-3 py-2 opacity-70"
+            >
               <div>
                 <span class="font-medium text-gray-800 dark:text-gray-100">{{ c.name }}</span>
-                <span v-if="c.role" class="text-xs text-gray-500 dark:text-gray-400 ml-1">({{ c.role }})</span>
+                <span
+                  v-if="c.role"
+                  class="text-xs text-gray-500 dark:text-gray-400 ml-1"
+                >({{ c.role }})</span>
                 <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 space-x-2">
                   <span v-if="c.email">{{ c.email }}</span>
                   <span v-if="c.phone">{{ c.phone }}</span>
                 </div>
               </div>
-              <button @click="pendingContacts.splice(i, 1)"
-                aria-label="Remove contact" title="Remove contact"
-                class="inline-flex items-center justify-center p-1.5 rounded text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition-colors shrink-0">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+              <button
+                aria-label="Remove contact"
+                title="Remove contact"
+                class="inline-flex items-center justify-center p-1.5 rounded text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition-colors shrink-0"
+                @click="pendingContacts.splice(i, 1)"
+              >
+                <svg
+                  class="w-3.5 h-3.5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  aria-hidden="true"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+                  />
                 </svg>
               </button>
             </li>
           </ul>
-          <p v-else class="text-sm text-gray-400 dark:text-gray-500 mb-4">No contacts yet.</p>
-          <form @submit.prevent="addContact" class="flex flex-col gap-2">
+          <p
+            v-else
+            class="text-sm text-gray-400 dark:text-gray-500 mb-4"
+          >
+            No contacts yet.
+          </p>
+          <form
+            class="flex flex-col gap-2"
+            @submit.prevent="addContact"
+          >
             <div class="flex gap-2">
-              <input v-model="newContact.name" placeholder="Name" required
-                class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              <input v-model="newContact.role" placeholder="Role"
-                class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <input
+                v-model="newContact.name"
+                placeholder="Name"
+                required
+                class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+              <input
+                v-model="newContact.role"
+                placeholder="Role"
+                class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
             </div>
             <div class="flex gap-2">
-              <input v-model="newContact.email" placeholder="Email" type="email"
-                class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              <input v-model="newContact.phone" placeholder="Phone"
-                class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <input
+                v-model="newContact.email"
+                placeholder="Email"
+                type="email"
+                class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+              <input
+                v-model="newContact.phone"
+                placeholder="Phone"
+                class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
             </div>
-            <button type="submit"
-              class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+            <button
+              type="submit"
+              class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            >
               Add Contact
             </button>
           </form>
@@ -472,80 +905,191 @@
 
         <!-- Meetings -->
         <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-          <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Meetings</p>
-          <ul v-if="sortedDialogMeetings.length" class="space-y-2 mb-4 max-h-48 overflow-y-auto pr-1">
-            <li v-for="m in sortedDialogMeetings" :key="m.id"
+          <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+            Meetings
+          </p>
+          <ul
+            v-if="sortedDialogMeetings.length"
+            class="space-y-2 mb-4 max-h-48 overflow-y-auto pr-1"
+          >
+            <li
+              v-for="m in sortedDialogMeetings"
+              :key="m.id"
               :class="m.past ? 'opacity-60 border-gray-100 dark:border-gray-700' : (isUrgent(m.scheduled_at) ? 'border-amber-300 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/20' : 'border-gray-100 dark:border-gray-700')"
-              class="border rounded-lg px-3 py-2 text-sm">
-              <div v-if="editingMeeting && editingMeeting.id === m.id" class="flex flex-col gap-2">
-                <input v-model="editingMeeting.title" placeholder="Title" required
-                  class="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100" />
-                <input v-model="editingMeeting.scheduled_at" type="datetime-local" required
-                  class="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100" />
-                <input v-model="editingMeeting.url" placeholder="URL" type="url"
-                  class="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100" />
-                <textarea v-model="editingMeeting.notes" rows="2" placeholder="Notes"
-                  class="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 resize-none"></textarea>
+              class="border rounded-lg px-3 py-2 text-sm"
+            >
+              <div
+                v-if="editingMeeting && editingMeeting.id === m.id"
+                class="flex flex-col gap-2"
+              >
+                <input
+                  v-model="editingMeeting.title"
+                  placeholder="Title"
+                  required
+                  class="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
+                >
+                <input
+                  v-model="editingMeeting.scheduled_at"
+                  type="datetime-local"
+                  required
+                  class="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
+                >
+                <input
+                  v-model="editingMeeting.url"
+                  placeholder="URL"
+                  type="url"
+                  class="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
+                >
+                <textarea
+                  v-model="editingMeeting.notes"
+                  rows="2"
+                  placeholder="Notes"
+                  class="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 resize-none"
+                />
                 <div class="flex gap-2 justify-end">
-                  <button @click="cancelEditMeeting" class="text-xs text-gray-500 dark:text-gray-400 px-2 py-1">Cancel</button>
-                  <button @click="saveMeetingEdit" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded">Save</button>
+                  <button
+                    class="text-xs text-gray-500 dark:text-gray-400 px-2 py-1"
+                    @click="cancelEditMeeting"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded"
+                    @click="saveMeetingEdit"
+                  >
+                    Save
+                  </button>
                 </div>
               </div>
-              <div v-else class="flex items-start justify-between gap-2">
+              <div
+                v-else
+                class="flex items-start justify-between gap-2"
+              >
                 <div>
-                  <div class="font-medium text-gray-800 dark:text-gray-100">{{ m.title }}</div>
-                  <div class="text-xs text-gray-500 dark:text-gray-400">{{ formatDate(m.scheduled_at) }}</div>
-                  <a v-if="m.url" :href="m.url" target="_blank" rel="noopener"
-                    class="text-xs text-blue-600 dark:text-blue-400 hover:underline">{{ m.url }}</a>
-                  <p v-if="m.notes" class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ m.notes }}</p>
+                  <div class="font-medium text-gray-800 dark:text-gray-100">
+                    {{ m.title }}
+                  </div>
+                  <div class="text-xs text-gray-500 dark:text-gray-400">
+                    {{ formatDate(m.scheduled_at) }}
+                  </div>
+                  <a
+                    v-if="m.url"
+                    :href="m.url"
+                    target="_blank"
+                    rel="noopener"
+                    class="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                  >{{ m.url }}</a>
+                  <p
+                    v-if="m.notes"
+                    class="text-xs text-gray-500 dark:text-gray-400 mt-0.5"
+                  >
+                    {{ m.notes }}
+                  </p>
                 </div>
                 <div class="flex gap-1 shrink-0">
-                  <button @click="editMeeting(m)"
-                    aria-label="Edit meeting" title="Edit meeting"
-                    class="inline-flex items-center justify-center p-1.5 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 transition-colors">
-                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                  <button
+                    aria-label="Edit meeting"
+                    title="Edit meeting"
+                    class="inline-flex items-center justify-center p-1.5 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 transition-colors"
+                    @click="editMeeting(m)"
+                  >
+                    <svg
+                      class="w-3.5 h-3.5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      aria-hidden="true"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
+                      />
                     </svg>
                   </button>
-                  <button @click="removeMeeting(m.id)"
-                    aria-label="Delete meeting" title="Delete meeting"
-                    class="inline-flex items-center justify-center p-1.5 rounded text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition-colors">
-                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                  <button
+                    aria-label="Delete meeting"
+                    title="Delete meeting"
+                    class="inline-flex items-center justify-center p-1.5 rounded text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition-colors"
+                    @click="removeMeeting(m.id)"
+                  >
+                    <svg
+                      class="w-3.5 h-3.5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      aria-hidden="true"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+                      />
                     </svg>
                   </button>
                 </div>
               </div>
             </li>
           </ul>
-          <p v-else class="text-sm text-gray-400 dark:text-gray-500 mb-4">No meetings yet.</p>
-          <form @submit.prevent="addMeeting" class="flex flex-col gap-2">
+          <p
+            v-else
+            class="text-sm text-gray-400 dark:text-gray-500 mb-4"
+          >
+            No meetings yet.
+          </p>
+          <form
+            class="flex flex-col gap-2"
+            @submit.prevent="addMeeting"
+          >
             <div class="flex gap-2">
-              <input v-model="newMeeting.title" placeholder="Title" required
-                class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              <input v-model="newMeeting.scheduled_at" type="datetime-local" required
-                class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <input
+                v-model="newMeeting.title"
+                placeholder="Title"
+                required
+                class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+              <input
+                v-model="newMeeting.scheduled_at"
+                type="datetime-local"
+                required
+                class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
             </div>
             <div class="flex gap-2">
-              <input v-model="newMeeting.url" placeholder="URL" type="url"
-                class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              <input v-model="newMeeting.notes" placeholder="Notes"
-                class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <input
+                v-model="newMeeting.url"
+                placeholder="URL"
+                type="url"
+                class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+              <input
+                v-model="newMeeting.notes"
+                placeholder="Notes"
+                class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
             </div>
-            <button type="submit"
-              class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+            <button
+              type="submit"
+              class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            >
               Add Meeting
             </button>
           </form>
         </div>
 
         <div class="flex gap-2 justify-end mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
-          <button @click="detailDialog.open = false"
-            class="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+          <button
+            class="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            @click="detailDialog.open = false"
+          >
             Cancel
           </button>
-          <button @click="saveDetail"
-            class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+          <button
+            class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            @click="saveDetail"
+          >
             Save
           </button>
         </div>
@@ -553,26 +1097,52 @@
     </div>
 
     <!-- Stage Comment Dialog -->
-    <div v-if="stageComment.open" class="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+    <div
+      v-if="stageComment.open"
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4"
+    >
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-sm">
-        <h3 class="font-semibold text-gray-800 dark:text-gray-100 mb-1">Stage changed</h3>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Add an optional comment for this transition.</p>
-        <textarea v-model="stageComment.notes" rows="3" placeholder="How did it go? (optional)"
-          class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none mb-3"></textarea>
-        <div v-if="stageComment.isLastStage" class="flex flex-col gap-1 mb-4">
+        <h3 class="font-semibold text-gray-800 dark:text-gray-100 mb-1">
+          Stage changed
+        </h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
+          Add an optional comment for this transition.
+        </p>
+        <textarea
+          v-model="stageComment.notes"
+          rows="3"
+          placeholder="How did it go? (optional)"
+          class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none mb-3"
+        />
+        <div
+          v-if="stageComment.isLastStage"
+          class="flex flex-col gap-1 mb-4"
+        >
           <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Set status</label>
-          <select v-model="stageComment.newStatus"
-            class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option v-for="s in statuses" :key="s" :value="s">{{ s.replace('_', ' ') }}</option>
+          <select
+            v-model="stageComment.newStatus"
+            class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option
+              v-for="s in statuses"
+              :key="s"
+              :value="s"
+            >
+              {{ s.replace('_', ' ') }}
+            </option>
           </select>
         </div>
         <div class="flex gap-2 justify-end">
-          <button @click="stageComment.open = false"
-            class="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+          <button
+            class="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            @click="stageComment.open = false"
+          >
             Cancel
           </button>
-          <button @click="confirmStageComment"
-            class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+          <button
+            class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            @click="confirmStageComment"
+          >
             Save
           </button>
         </div>
@@ -580,39 +1150,77 @@
     </div>
 
     <!-- Manage Stages Dialog -->
-    <div v-if="stagesMgmt" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div
+      v-if="stagesMgmt"
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+    >
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-sm">
         <div class="flex justify-between items-center mb-4">
-          <h3 class="font-semibold text-gray-800 dark:text-gray-100">Manage Stages</h3>
-          <button @click="stagesMgmt = false"
-            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg leading-none">✕</button>
+          <h3 class="font-semibold text-gray-800 dark:text-gray-100">
+            Manage Stages
+          </h3>
+          <button
+            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg leading-none"
+            @click="stagesMgmt = false"
+          >
+            ✕
+          </button>
         </div>
         <ul class="space-y-2 mb-4">
-          <li v-for="(stage, idx) in stages" :key="stage.id"
+          <li
+            v-for="(stage, idx) in stages"
+            :key="stage.id"
             draggable="true"
+            :class="dragOverIdx === idx ? 'ring-2 ring-blue-400 rounded' : ''"
+            class="flex items-center gap-2 cursor-grab"
             @dragstart="dragIdx = idx"
             @dragover.prevent="dragOverIdx = idx"
             @dragleave="dragOverIdx = null"
             @drop.prevent="dropStage(idx)"
-            :class="dragOverIdx === idx ? 'ring-2 ring-blue-400 rounded' : ''"
-            class="flex items-center gap-2 cursor-grab">
+          >
             <span class="text-gray-300 dark:text-gray-600 select-none text-sm">⠿</span>
-            <input v-model="stage.name" @blur="updateStage(stage)"
-              class="flex-1 border border-gray-300 dark:border-gray-600 rounded px-2 py-1.5 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-            <button @click="removeStage(stage.id)"
-              aria-label="Delete stage" title="Delete stage"
-              class="inline-flex items-center justify-center p-1.5 rounded text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition-colors">
-              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+            <input
+              v-model="stage.name"
+              class="flex-1 border border-gray-300 dark:border-gray-600 rounded px-2 py-1.5 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              @blur="updateStage(stage)"
+            >
+            <button
+              aria-label="Delete stage"
+              title="Delete stage"
+              class="inline-flex items-center justify-center p-1.5 rounded text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition-colors"
+              @click="removeStage(stage.id)"
+            >
+              <svg
+                class="w-3.5 h-3.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+                />
               </svg>
             </button>
           </li>
         </ul>
-        <form @submit.prevent="addStage" class="flex gap-2">
-          <input v-model="newStageName" placeholder="New stage name" required
-            class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          <button type="submit"
-            class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors">
+        <form
+          class="flex gap-2"
+          @submit.prevent="addStage"
+        >
+          <input
+            v-model="newStageName"
+            placeholder="New stage name"
+            required
+            class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+          <button
+            type="submit"
+            class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors"
+          >
             Add
           </button>
         </form>
@@ -620,82 +1228,144 @@
     </div>
   </div>
 
-    <!-- Default Stages Dialog -->
-    <div v-if="defaultStagesMgmt" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-sm">
-        <div class="flex justify-between items-center mb-1">
-          <h3 class="font-semibold text-gray-800 dark:text-gray-100">Default Stages</h3>
-          <button @click="defaultStagesMgmt = false"
-            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg leading-none">✕</button>
-        </div>
-        <p class="text-xs text-gray-400 dark:text-gray-500 mb-4">Copied to every new job on creation.</p>
-        <ul class="space-y-2 mb-4">
-          <li v-for="(stage, idx) in defaultStages" :key="stage.id"
-            draggable="true"
-            @dragstart="dragDefaultIdx = idx"
-            @dragover.prevent="dragOverDefaultIdx = idx"
-            @dragleave="dragOverDefaultIdx = null"
-            @drop.prevent="dropDefaultStage(idx)"
-            :class="dragOverDefaultIdx === idx ? 'ring-2 ring-blue-400 rounded' : ''"
-            class="flex items-center gap-2 cursor-grab">
-            <span class="text-gray-300 dark:text-gray-600 select-none text-sm">⠿</span>
-            <input v-model="stage.name" @blur="updateStage(stage)"
-              class="flex-1 border border-gray-300 dark:border-gray-600 rounded px-2 py-1.5 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-            <button @click="removeDefaultStage(stage.id)"
-              aria-label="Delete stage" title="Delete stage"
-              class="inline-flex items-center justify-center p-1.5 rounded text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition-colors">
-              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-              </svg>
-            </button>
-          </li>
-        </ul>
-        <form @submit.prevent="addDefaultStage" class="flex gap-2">
-          <input v-model="newDefaultStageName" placeholder="New stage name" required
-            class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          <button type="submit"
-            class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors">
-            Add
-          </button>
-        </form>
+  <!-- Default Stages Dialog -->
+  <div
+    v-if="defaultStagesMgmt"
+    class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+  >
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-sm">
+      <div class="flex justify-between items-center mb-1">
+        <h3 class="font-semibold text-gray-800 dark:text-gray-100">
+          Default Stages
+        </h3>
+        <button
+          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg leading-none"
+          @click="defaultStagesMgmt = false"
+        >
+          ✕
+        </button>
       </div>
+      <p class="text-xs text-gray-400 dark:text-gray-500 mb-4">
+        Copied to every new job on creation.
+      </p>
+      <ul class="space-y-2 mb-4">
+        <li
+          v-for="(stage, idx) in defaultStages"
+          :key="stage.id"
+          draggable="true"
+          :class="dragOverDefaultIdx === idx ? 'ring-2 ring-blue-400 rounded' : ''"
+          class="flex items-center gap-2 cursor-grab"
+          @dragstart="dragDefaultIdx = idx"
+          @dragover.prevent="dragOverDefaultIdx = idx"
+          @dragleave="dragOverDefaultIdx = null"
+          @drop.prevent="dropDefaultStage(idx)"
+        >
+          <span class="text-gray-300 dark:text-gray-600 select-none text-sm">⠿</span>
+          <input
+            v-model="stage.name"
+            class="flex-1 border border-gray-300 dark:border-gray-600 rounded px-2 py-1.5 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            @blur="updateStage(stage)"
+          >
+          <button
+            aria-label="Delete stage"
+            title="Delete stage"
+            class="inline-flex items-center justify-center p-1.5 rounded text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition-colors"
+            @click="removeDefaultStage(stage.id)"
+          >
+            <svg
+              class="w-3.5 h-3.5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              aria-hidden="true"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+              />
+            </svg>
+          </button>
+        </li>
+      </ul>
+      <form
+        class="flex gap-2"
+        @submit.prevent="addDefaultStage"
+      >
+        <input
+          v-model="newDefaultStageName"
+          placeholder="New stage name"
+          required
+          class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+        <button
+          type="submit"
+          class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors"
+        >
+          Add
+        </button>
+      </form>
     </div>
+  </div>
 
-    <!-- Delete Confirm Dialog -->
-    <div v-if="confirmDelete.open" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-sm">
-        <h3 class="font-semibold text-gray-800 dark:text-gray-100 mb-2">Delete job application?</h3>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">This action cannot be undone.</p>
-        <div class="flex justify-end gap-3">
-          <button @click="confirmDelete.open = false"
-            class="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-            Cancel
-          </button>
-          <button @click="doDelete"
-            class="px-4 py-2 text-sm rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium transition-colors">
-            Delete
-          </button>
-        </div>
+  <!-- Delete Confirm Dialog -->
+  <div
+    v-if="confirmDelete.open"
+    class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+  >
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-sm">
+      <h3 class="font-semibold text-gray-800 dark:text-gray-100 mb-2">
+        Delete job application?
+      </h3>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
+        This action cannot be undone.
+      </p>
+      <div class="flex justify-end gap-3">
+        <button
+          class="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          @click="confirmDelete.open = false"
+        >
+          Cancel
+        </button>
+        <button
+          class="px-4 py-2 text-sm rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium transition-colors"
+          @click="doDelete"
+        >
+          Delete
+        </button>
       </div>
     </div>
+  </div>
 
-    <!-- Archive Confirm Dialog -->
-    <div v-if="confirmArchive.open" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-sm">
-        <h3 class="font-semibold text-gray-800 dark:text-gray-100 mb-2">Archive job application?</h3>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">This marks the job as archived.</p>
-        <div class="flex justify-end gap-3">
-          <button @click="confirmArchive.open = false"
-            class="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-            Cancel
-          </button>
-          <button @click="doArchive"
-            class="px-4 py-2 text-sm rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-medium transition-colors">
-            Archive
-          </button>
-        </div>
+  <!-- Archive Confirm Dialog -->
+  <div
+    v-if="confirmArchive.open"
+    class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+  >
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-sm">
+      <h3 class="font-semibold text-gray-800 dark:text-gray-100 mb-2">
+        Archive job application?
+      </h3>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
+        This marks the job as archived.
+      </p>
+      <div class="flex justify-end gap-3">
+        <button
+          class="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          @click="confirmArchive.open = false"
+        >
+          Cancel
+        </button>
+        <button
+          class="px-4 py-2 text-sm rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-medium transition-colors"
+          @click="doArchive"
+        >
+          Archive
+        </button>
       </div>
     </div>
+  </div>
 </template>
 
 <script setup>
