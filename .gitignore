@@ -6,6 +6,8 @@
 # Build / tooling
 /tmp/
 jobtracker
+jobtracker-desktop
+coverage.out
 web/dist/
 web/node_modules/
 

@@ -121,6 +121,24 @@ The PVC is deleted with it. To keep your data, remove the PVC from the delete co
 kubectl delete deployment,service jobtracker
 ```
 
+## Desktop build
+
+A Wails v2 desktop target (`cmd/desktop`) packages the same backend and
+frontend as a native app: no basic auth, no network listener, SQLite lives in
+the OS user data dir (override with `DB_PATH`).
+
+```bash
+cd web && npm run build   # embedded via web/embed.go, must run first
+go build -tags desktop,production,webkit2_41 -o jobtracker-desktop ./cmd/desktop
+./jobtracker-desktop
+```
+
+Requires the `webkit2gtk-4.1` runtime on Linux (the `webkit2_41` build tag
+matches it; omit the tag only if `webkit2gtk-4.0` is installed instead).
+Windows and macOS builds drop `webkit2_41` (see
+`.github/workflows/release.yml`, which builds and publishes all three OSes on
+tag push).
+
 ## Deploy to Railway
 
 Railway builds from the repo-root `Dockerfile` (config in `railway.toml`), which
