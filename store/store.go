@@ -124,6 +124,18 @@ func (s *Store) seedDefaultStages() error {
 	}).Error
 }
 
+// Close closes the underlying database connection, checkpointing the WAL.
+func (s *Store) Close() error {
+	sqlDB, err := s.db.DB()
+	if err != nil {
+		return fmt.Errorf("getting underlying database: %w", err)
+	}
+	if err := sqlDB.Close(); err != nil {
+		return fmt.Errorf("closing database: %w", err)
+	}
+	return nil
+}
+
 func (s *Store) List() ([]Job, error) {
 	jobs := []Job{}
 	return jobs, s.db.Preload("Stage").Preload("Stages", func(db *gorm.DB) *gorm.DB {
