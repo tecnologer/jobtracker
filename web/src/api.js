@@ -24,6 +24,9 @@ export const updateJob = (id, job) => request(`/api/jobs/${id}`, 'PUT', jobBody(
 export const deleteJob = id => request(`/api/jobs/${id}`, 'DELETE')
 export const setTopMatch = (id, topMatch) => request(`/api/jobs/${id}/top-match`, 'PUT', { top_match: topMatch })
 
+// dashboard stats
+export const fetchStats = () => get('/api/stats')
+
 // stage logs
 export const fetchLogs = jobId => get(`/api/jobs/${jobId}/logs`)
 export const addLog = (jobId, body) => request(`/api/jobs/${jobId}/logs`, 'POST', body)

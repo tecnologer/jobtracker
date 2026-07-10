@@ -4,6 +4,12 @@
       Job Tracker
     </h1>
     <div class="flex gap-2">
+      <button
+        class="text-sm px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        @click="emit('toggle-view')"
+      >
+        {{ dashboardOpen ? 'Jobs' : 'Dashboard' }}
+      </button>
       <a
         href="/api/jobs/export"
         download
@@ -86,7 +92,11 @@ import { useMeetings } from '../composables/useMeetings'
 import { useDarkMode } from '../composables/useDarkMode'
 import DefaultStagesDialog from './DefaultStagesDialog.vue'
 
-const emit = defineEmits(['open-job'])
+defineProps({
+  dashboardOpen: { type: Boolean, default: false },
+})
+
+const emit = defineEmits(['open-job', 'toggle-view'])
 
 const { upcomingMeetings } = useMeetings()
 const { dark, toggleDark } = useDarkMode()

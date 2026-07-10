@@ -15,5 +15,22 @@ export function statusClass(s) {
   return statusColors[s] ?? 'bg-gray-100 text-gray-600'
 }
 
+// solid shades for dashboard bar fills — the pill classes above are too pale
+// for bars and their text-* half is meaningless on a div
+const statusBarColors = {
+  prospect:    'bg-gray-400',
+  applied:     'bg-blue-500',
+  in_progress: 'bg-purple-500',
+  on_hold:     'bg-amber-500',
+  negotiating: 'bg-indigo-500',
+  accepted:    'bg-green-500',
+  rejected:    'bg-red-500',
+  canceled:    'bg-yellow-500',
+}
+
+export function statusBarClass(s) {
+  return statusBarColors[s] ?? 'bg-gray-400'
+}
+
 export const closedStatuses = ['rejected', 'canceled']
 export const activeStatuses = statuses.filter(s => !closedStatuses.includes(s))

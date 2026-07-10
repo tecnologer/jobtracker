@@ -1,15 +1,22 @@
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-    <AppHeader @open-job="openJob" />
+    <AppHeader
+      :dashboard-open="showDashboard"
+      @open-job="openJob"
+      @toggle-view="showDashboard = !showDashboard"
+    />
 
     <main class="max-w-6xl mx-auto px-6">
-      <JobFilters />
-      <JobsTable
-        :jobs="filteredJobs"
-        :filter-text="filter.text"
-        :total-count="jobs.length"
-        @view="detailJob = $event"
-      />
+      <template v-if="!showDashboard">
+        <JobFilters />
+        <JobsTable
+          :jobs="filteredJobs"
+          :filter-text="filter.text"
+          :total-count="jobs.length"
+          @view="detailJob = $event"
+        />
+      </template>
+      <DashboardView v-else />
     </main>
 
     <JobDetailDialog
@@ -32,6 +39,7 @@ import AppHeader from './components/AppHeader.vue'
 import JobFilters from './components/JobFilters.vue'
 import JobsTable from './components/JobsTable.vue'
 import JobDetailDialog from './components/JobDetailDialog.vue'
+import DashboardView from './components/DashboardView.vue'
 
 const { jobs, loadJobs } = useJobs()
 const { filter, filteredJobs } = useJobFilters()
@@ -40,6 +48,7 @@ const { loadUpcomingMeetings } = useMeetings()
 const { initDarkMode } = useDarkMode()
 
 const detailJob = ref(null)
+const showDashboard = ref(false) // resets on refresh: FR-01 needs no persistence
 
 function openJob(jobId) {
   const job = jobs.value.find(j => j.id === jobId)
