@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/tecnologer/jobtracker/handler"
 	"github.com/tecnologer/jobtracker/store"
@@ -27,19 +28,44 @@ func main() {
 		log.Fatal("AUTH_EMAIL and AUTH_PASSWORD must both be set; refusing to start without credentials")
 	}
 
-	h := handler.New(s)
+	mux := apiRoutes(handler.New(s))
 
+	// /healthz is registered on the root mux, outside the auth middleware, so
+	// Railway's healthcheck can reach it without credentials.
+	root := http.NewServeMux()
+	root.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("ok"))
+	})
+	root.Handle("/", basicAuth(mux, authEmail, authPassword))
+
+	srv := &http.Server{
+		Addr:              ":8080",
+		Handler:           root,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+	log.Println("listening on :8080")
+	log.Fatal(srv.ListenAndServe())
+}
+
+// apiRoutes registers every API handler plus the static SPA fallback.
+func apiRoutes(h *handler.Handler) *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/jobs", h.List)
 	mux.HandleFunc("GET /api/jobs/export", h.ExportCSV)
 	mux.HandleFunc("POST /api/jobs", h.Create)
 	mux.HandleFunc("PUT /api/jobs/{id}", h.Update)
+	mux.HandleFunc("PUT /api/jobs/{id}/top-match", h.SetTopMatch)
 	mux.HandleFunc("DELETE /api/jobs/{id}", h.Delete)
 	mux.HandleFunc("GET /api/jobs/{id}/logs", h.ListStageLogs)
 	mux.HandleFunc("POST /api/jobs/{id}/logs", h.AddStageLog)
 	mux.HandleFunc("GET /api/jobs/{id}/contacts", h.ListContacts)
 	mux.HandleFunc("POST /api/jobs/{id}/contacts", h.CreateContact)
 	mux.HandleFunc("DELETE /api/jobs/{id}/contacts/{cid}", h.DeleteContact)
+	mux.HandleFunc("GET /api/jobs/{id}/meetings", h.ListMeetings)
+	mux.HandleFunc("POST /api/jobs/{id}/meetings", h.CreateMeeting)
+	mux.HandleFunc("PUT /api/jobs/{id}/meetings/{mid}", h.UpdateMeeting)
+	mux.HandleFunc("DELETE /api/jobs/{id}/meetings/{mid}", h.DeleteMeeting)
+	mux.HandleFunc("GET /api/meetings/upcoming", h.ListUpcomingMeetings)
 	mux.HandleFunc("GET /api/stages", h.ListDefaultStages)
 	mux.HandleFunc("POST /api/stages", h.CreateDefaultStage)
 	mux.HandleFunc("GET /api/jobs/{id}/stages", h.ListStages)
@@ -47,17 +73,7 @@ func main() {
 	mux.HandleFunc("PUT /api/stages/{id}", h.UpdateStage)
 	mux.HandleFunc("DELETE /api/stages/{id}", h.DeleteStage)
 	mux.Handle("/", cacheControl(http.FileServer(http.Dir("web/dist"))))
-
-	// /healthz is registered on the root mux, outside the auth middleware, so
-	// Railway's healthcheck can reach it without credentials.
-	root := http.NewServeMux()
-	root.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("ok"))
-	})
-	root.Handle("/", basicAuth(mux, authEmail, authPassword))
-
-	log.Println("listening on :8080")
-	log.Fatal(http.ListenAndServe(":8080", root))
+	return mux
 }
 
 // basicAuth gates every request behind HTTP Basic Auth, comparing the submitted

@@ -3,12 +3,15 @@ package handler
 import (
 	"encoding/csv"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/tecnologer/jobtracker/store"
 )
+
+const yes = "yes"
 
 type Handler struct {
 	store *store.Store
@@ -18,21 +21,38 @@ func New(s *store.Store) *Handler {
 	return &Handler{store: s}
 }
 
-func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) List(w http.ResponseWriter, _ *http.Request) {
 	jobs, err := h.store.List()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	writeJSON(w, http.StatusOK, jobs)
+}
+
+// writeJSON sets the JSON content type, writes the status, and encodes v.
+// The status line is already sent by the time encoding can fail, so the
+// error can only be logged, not turned into an HTTP error response.
+func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(jobs)
+	w.WriteHeader(status)
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		log.Printf("encoding JSON response: %v", err)
+	}
 }
 
 // ExportCSV streams every job as a CSV attachment. applied_at is rendered as a
 // wall date (YYYY-MM-DD) in its own stored offset so the day never shifts for
 // the viewer's timezone; created_at is a real instant, rendered in full RFC3339.
-func (h *Handler) ExportCSV(w http.ResponseWriter, r *http.Request) {
+// Next Meeting is each job's soonest upcoming meeting (scheduled_at >= now),
+// computed with a single grouped query rather than one lookup per row.
+func (h *Handler) ExportCSV(w http.ResponseWriter, _ *http.Request) {
 	jobs, err := h.store.List()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	nextMeetings, err := h.store.NextMeetingTimes()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -44,37 +64,55 @@ func (h *Handler) ExportCSV(w http.ResponseWriter, r *http.Request) {
 	cw := csv.NewWriter(w)
 	defer cw.Flush()
 
-	if err := cw.Write([]string{"ID", "Company", "Position", "Status", "Stage", "Applied At", "Archived", "URL", "Notes", "Created At"}); err != nil {
+	if err := cw.Write([]string{
+		"ID", "Company", "Position", "Status", "Stage", "Applied At",
+		"Archived", "Top Match", "URL", "Notes", "Created At", "Next Meeting",
+	}); err != nil {
 		return
 	}
 
 	for _, job := range jobs {
-		appliedAt := ""
-		if job.AppliedAt != nil {
-			appliedAt = job.AppliedAt.Format("2006-01-02")
-		}
-		stageName := ""
-		if job.Stage != nil {
-			stageName = job.Stage.Name
-		}
-		archived := ""
-		if job.ArchivedAt != nil {
-			archived = "yes"
-		}
-		if err := cw.Write([]string{
-			strconv.FormatUint(uint64(job.ID), 10),
-			job.Company,
-			job.Position,
-			string(job.Status),
-			stageName,
-			appliedAt,
-			archived,
-			job.URL,
-			job.Notes,
-			job.CreatedAt.Format(time.RFC3339),
-		}); err != nil {
+		if err := cw.Write(csvRow(job, nextMeetings)); err != nil {
 			return
 		}
+	}
+}
+
+// csvRow renders one job as a CSV record; see ExportCSV for column semantics.
+func csvRow(job store.Job, nextMeetings map[uint]time.Time) []string {
+	appliedAt := ""
+	if job.AppliedAt != nil {
+		appliedAt = job.AppliedAt.Format("2006-01-02")
+	}
+	stageName := ""
+	if job.Stage != nil {
+		stageName = job.Stage.Name
+	}
+	archived := ""
+	if job.ArchivedAt != nil {
+		archived = yes
+	}
+	topMatch := ""
+	if job.TopMatch {
+		topMatch = yes
+	}
+	nextMeeting := ""
+	if scheduledAt, ok := nextMeetings[job.ID]; ok {
+		nextMeeting = scheduledAt.Format(time.RFC3339)
+	}
+	return []string{
+		strconv.FormatUint(uint64(job.ID), 10),
+		job.Company,
+		job.Position,
+		string(job.Status),
+		stageName,
+		appliedAt,
+		archived,
+		topMatch,
+		job.URL,
+		job.Notes,
+		job.CreatedAt.Format(time.RFC3339),
+		nextMeeting,
 	}
 }
 
@@ -88,9 +126,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(j)
+	writeJSON(w, http.StatusCreated, j)
 }
 
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
@@ -111,6 +147,26 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (h *Handler) SetTopMatch(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+	var body struct {
+		TopMatch bool `json:"top_match"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if err := h.store.SetTopMatch(uint(id), body.TopMatch); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
 	if err != nil {
@@ -124,14 +180,13 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *Handler) ListDefaultStages(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) ListDefaultStages(w http.ResponseWriter, _ *http.Request) {
 	stages, err := h.store.ListDefaultStages()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(stages)
+	writeJSON(w, http.StatusOK, stages)
 }
 
 func (h *Handler) CreateDefaultStage(w http.ResponseWriter, r *http.Request) {
@@ -144,9 +199,7 @@ func (h *Handler) CreateDefaultStage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(stage)
+	writeJSON(w, http.StatusCreated, stage)
 }
 
 func (h *Handler) ListStages(w http.ResponseWriter, r *http.Request) {
@@ -160,8 +213,7 @@ func (h *Handler) ListStages(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(stages)
+	writeJSON(w, http.StatusOK, stages)
 }
 
 func (h *Handler) CreateStage(w http.ResponseWriter, r *http.Request) {
@@ -180,9 +232,7 @@ func (h *Handler) CreateStage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(stage)
+	writeJSON(w, http.StatusCreated, stage)
 }
 
 func (h *Handler) UpdateStage(w http.ResponseWriter, r *http.Request) {
@@ -227,8 +277,7 @@ func (h *Handler) ListContacts(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(contacts)
+	writeJSON(w, http.StatusOK, contacts)
 }
 
 func (h *Handler) CreateContact(w http.ResponseWriter, r *http.Request) {
@@ -247,9 +296,7 @@ func (h *Handler) CreateContact(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(c)
+	writeJSON(w, http.StatusCreated, c)
 }
 
 func (h *Handler) DeleteContact(w http.ResponseWriter, r *http.Request) {
@@ -276,8 +323,7 @@ func (h *Handler) ListStageLogs(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(logs)
+	writeJSON(w, http.StatusOK, logs)
 }
 
 func (h *Handler) AddStageLog(w http.ResponseWriter, r *http.Request) {
@@ -286,14 +332,101 @@ func (h *Handler) AddStageLog(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid id", http.StatusBadRequest)
 		return
 	}
-	var log store.StageLog
-	if err := json.NewDecoder(r.Body).Decode(&log); err != nil {
+	var stageLog store.StageLog
+	if err := json.NewDecoder(r.Body).Decode(&stageLog); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if err := h.store.AddStageLog(uint(id), &log); err != nil {
+	if err := h.store.AddStageLog(uint(id), &stageLog); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
+}
+
+func (h *Handler) ListMeetings(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+	meetings, err := h.store.ListMeetings(uint(id))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, http.StatusOK, meetings)
+}
+
+func (h *Handler) CreateMeeting(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+	var m store.Meeting
+	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if m.Title == "" || m.ScheduledAt.IsZero() {
+		http.Error(w, "title and scheduled_at are required", http.StatusBadRequest)
+		return
+	}
+	m.JobID = uint(id)
+	if err := h.store.CreateMeeting(&m); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, http.StatusCreated, m)
+}
+
+func (h *Handler) UpdateMeeting(w http.ResponseWriter, r *http.Request) {
+	mid, err := strconv.ParseUint(r.PathValue("mid"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+	var m store.Meeting
+	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if m.Title == "" || m.ScheduledAt.IsZero() {
+		http.Error(w, "title and scheduled_at are required", http.StatusBadRequest)
+		return
+	}
+	if err := h.store.UpdateMeeting(uint(mid), &m); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *Handler) DeleteMeeting(w http.ResponseWriter, r *http.Request) {
+	mid, err := strconv.ParseUint(r.PathValue("mid"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+	if err := h.store.DeleteMeeting(uint(mid)); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *Handler) ListUpcomingMeetings(w http.ResponseWriter, r *http.Request) {
+	limit := 10
+	if v := r.URL.Query().Get("limit"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			limit = n
+		}
+	}
+	meetings, err := h.store.ListUpcomingMeetings(limit)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, http.StatusOK, meetings)
 }
