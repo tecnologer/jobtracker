@@ -41,6 +41,15 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 	}
 }
 
+func (h *Handler) Stats(w http.ResponseWriter, _ *http.Request) {
+	stats, err := h.store.Stats(time.Now())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, http.StatusOK, stats)
+}
+
 // ExportCSV streams every job as a CSV attachment. applied_at is rendered as a
 // wall date (YYYY-MM-DD) in its own stored offset so the day never shifts for
 // the viewer's timezone; created_at is a real instant, rendered in full RFC3339.

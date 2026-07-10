@@ -266,6 +266,39 @@ func TestMeetings(t *testing.T) {
 
 // newMux builds a Handler over a fresh temp-file store and registers the same
 // route patterns as main.go, so r.PathValue works in tests.
+func TestStats(t *testing.T) {
+	t.Parallel()
+
+	mux, st := newMux(t)
+
+	rec := do(t, mux, http.MethodPost, "/api/jobs", `{"company":"Acme","position":"Dev","status":"applied","applied_at":"2026-01-02T00:00:00-06:00"}`)
+	require.Equal(t, http.StatusCreated, rec.Code, rec.Body.String())
+	var job store.Job
+	decode(t, rec, &job)
+
+	stages, err := st.ListStages(job.ID)
+	require.NoError(t, err)
+	require.NotEmpty(t, stages)
+	rec = do(t, mux, http.MethodPost, "/api/jobs/"+itoa(job.ID)+"/logs", `{"stage_id":`+itoa(stages[0].ID)+`}`)
+	require.Equal(t, http.StatusCreated, rec.Code, rec.Body.String())
+
+	rec = do(t, mux, http.MethodGet, "/api/stats", "")
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+	body := rec.Body.String() // capture before decode drains the buffer
+	var stats store.Stats
+	decode(t, rec, &stats)
+	assert.Equal(t, 1, stats.TotalJobs)
+	assert.Equal(t, 1, stats.ActiveJobs)
+	assert.Equal(t, 1, stats.StatusBreakdown[store.StatusApplied])
+	require.NotEmpty(t, stats.Funnel)
+	assert.Equal(t, 1, stats.Funnel[0].JobsReached)
+
+	// wire shape: snake_case keys the frontend contract relies on
+	for _, key := range []string{"total_jobs", "active_jobs", "offers", "rejection_rate", "avg_days_to_first_response", "status_breakdown", "funnel", "jobs_reached", "avg_days", "sort_order"} {
+		assert.Contains(t, body, `"`+key+`"`)
+	}
+}
+
 func newMux(t *testing.T) (*http.ServeMux, *store.Store) {
 	t.Helper()
 
@@ -275,6 +308,7 @@ func newMux(t *testing.T) (*http.ServeMux, *store.Store) {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/jobs", h.List)
+	mux.HandleFunc("GET /api/stats", h.Stats)
 	mux.HandleFunc("GET /api/jobs/export", h.ExportCSV)
 	mux.HandleFunc("POST /api/jobs", h.Create)
 	mux.HandleFunc("PUT /api/jobs/{id}", h.Update)
