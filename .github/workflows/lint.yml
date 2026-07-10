@@ -1,0 +1,53 @@
+name: lint
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'web/**/*.vue'
+      - 'web/**/*.js'
+      - 'web/**/*.ts'
+      - 'web/eslint.config.js'
+      - 'web/package.json'
+      - 'web/package-lock.json'
+      - '.github/workflows/lint.yml'
+      - '**/*.go'
+      - 'go.mod'
+      - 'go.sum'
+      - '.golangci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  eslint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      # setup-node's eslint-stylish problem matcher turns this output
+      # into inline PR annotations; no --fix in CI, errors fail the job
+      - run: npm run lint
+
+  golangci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: golangci/golangci-lint-action@v8
+        with:
+          version: latest

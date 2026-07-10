@@ -51,6 +51,7 @@ linters:
         linters:
           - cyclop # long linear test bodies are fine; splitting them hurts readability
           - funlen # same reasoning as cyclop
+          - goconst # repeated fixture literals in tests read better inline
     paths:
       - third_party$
       - builtin$
