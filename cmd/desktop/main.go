@@ -7,6 +7,7 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"io/fs"
 	"log"
@@ -21,7 +22,14 @@ import (
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	"github.com/wailsapp/wails/v2/pkg/options/linux"
 )
+
+// appIcon is the window icon on Linux; on Windows the icon comes from the
+// rsrc_windows_*.syso resources compiled into the exe (see winres/).
+//
+//go:embed icon.png
+var appIcon []byte
 
 func main() {
 	dbPath := os.Getenv("DB_PATH")
@@ -50,6 +58,15 @@ func main() {
 		Height: 800,
 		AssetServer: &assetserver.Options{
 			Handler: mux,
+		},
+		Linux: &linux.Options{
+			Icon:        appIcon,
+			ProgramName: "JobTracker",
+			// A nil Linux options struct defaults the GPU policy to Never;
+			// once the struct is set, the zero value is OnDemand, which
+			// crashes WebKitGTK on Wayland (Gdk protocol error 71). Keep
+			// the nil-case default explicit.
+			WebviewGpuPolicy: linux.WebviewGpuPolicyNever,
 		},
 		OnShutdown: func(_ context.Context) {
 			if err := s.Close(); err != nil {
