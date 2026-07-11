@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=JobTracker
+Comment=Job application tracker
+Exec=jobtracker-desktop
+Icon=jobtracker
+Terminal=false
+Categories=Office;
+StartupWMClass=JobTracker

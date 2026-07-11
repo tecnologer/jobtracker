@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>net.tecnologer.jobtracker</id>
+  <name>JobTracker</name>
+  <summary>Track your job applications</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>AGPL-3.0-only</project_license>
+  <developer_name>Tecnologer</developer_name>
+  <launchable type="desktop-id">net.tecnologer.jobtracker.desktop</launchable>
+  <description>
+    <p>
+      JobTracker helps you keep track of job applications: statuses, stages,
+      contacts, and notes, with a dashboard to see your progress at a glance.
+    </p>
+  </description>
+  <url type="homepage">https://github.com/tecnologer/jobtracker</url>
+</component>

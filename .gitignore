@@ -17,3 +17,11 @@ web/node_modules/
 # Secrets
 .env
 .env.local
+jobtracker-*
+
+# Packaging output (Linux tar.gz covered by jobtracker-* above)
+JobTracker.app/
+JobTracker-darwin-arm64.zip
+icon.icns
+.claude/
+CLAUDE.md

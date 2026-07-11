@@ -1,0 +1,35 @@
+app-id: net.tecnologer.jobtracker
+runtime: org.gnome.Platform
+runtime-version: '48'
+sdk: org.gnome.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.golang
+  - org.freedesktop.Sdk.Extension.node24
+command: jobtracker-desktop
+
+finish-args:
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --share=ipc
+  - --device=dri
+
+build-options:
+  append-path: /usr/lib/sdk/golang/bin:/usr/lib/sdk/node24/bin
+  # local builds only — Flathub requires vendored/offline sources
+  # (flatpak-builder-tools for go+npm); convert before submission
+  build-args:
+    - --share=network
+
+modules:
+  - name: jobtracker
+    buildsystem: simple
+    build-commands:
+      - cd web && npm ci && npm run build
+      - go build -tags desktop,production,webkit2_41 -o jobtracker-desktop ./cmd/desktop
+      - install -Dm755 jobtracker-desktop /app/bin/jobtracker-desktop
+      - install -Dm644 resources/images/icons/icon-512.png /app/share/icons/hicolor/512x512/apps/net.tecnologer.jobtracker.png
+      - install -Dm644 flatpak/net.tecnologer.jobtracker.desktop /app/share/applications/net.tecnologer.jobtracker.desktop
+      - install -Dm644 flatpak/net.tecnologer.jobtracker.metainfo.xml /app/share/metainfo/net.tecnologer.jobtracker.metainfo.xml
+    sources:
+      - type: dir
+        path: ..

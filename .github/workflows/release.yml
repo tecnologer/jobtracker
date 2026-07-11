@@ -17,10 +17,25 @@ jobs:
             artifact: jobtracker-desktop-linux-amd64
             tags: desktop,production,webkit2_41
             ldflags: -s
+            arch: amd64
+          # linux/arm64 needs a native runner: CGO against webkit2gtk
+          - os: ubuntu-24.04-arm
+            artifact: jobtracker-desktop-linux-arm64
+            tags: desktop,production,webkit2_41
+            ldflags: -s
+            arch: arm64
           - os: windows-latest
             artifact: jobtracker-desktop-windows-amd64.exe
             tags: desktop,production
             ldflags: -s -H windowsgui
+            arch: amd64
+          # windows is pure Go (webview2), so arm64 cross-compiles
+          - os: windows-latest
+            artifact: jobtracker-desktop-windows-arm64.exe
+            tags: desktop,production
+            ldflags: -s -H windowsgui
+            goarch: arm64
+            arch: arm64
           - os: macos-latest
             artifact: jobtracker-desktop-darwin-arm64
             tags: desktop,production
@@ -43,15 +58,32 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - if: matrix.os == 'ubuntu-latest'
+      - if: startsWith(matrix.os, 'ubuntu')
         run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
 
       # newer Xcode SDKs no longer auto-link UniformTypeIdentifiers, which Wails v2 needs (UTType)
       - if: matrix.os == 'macos-latest'
         run: echo "CGO_LDFLAGS=-framework UniformTypeIdentifiers" >> "$GITHUB_ENV"
 
-      - run: go build -tags ${{ matrix.tags }} -ldflags "${{ matrix.ldflags }}" -o ${{ matrix.artifact }} ./cmd/desktop
+      - run: go build -tags ${{ matrix.tags }} -ldflags "${{ matrix.ldflags }} -X github.com/tecnologer/jobtracker/handler.buildVersion=${{ github.ref_name }}" -o ${{ matrix.artifact }} ./cmd/desktop
+        env:
+          GOARCH: ${{ matrix.goarch || '' }}
+
+      - if: startsWith(matrix.os, 'ubuntu')
+        run: bash scripts/package-linux.sh ${{ matrix.artifact }} ${{ matrix.arch }}
+
+      - if: matrix.os == 'macos-latest'
+        run: bash scripts/package-darwin.sh ${{ matrix.artifact }} ${{ github.ref_name }}
+
+      # Inno Setup is preinstalled on windows-latest runners
+      - if: startsWith(matrix.os, 'windows')
+        shell: pwsh
+        run: |
+          $ver = "${{ github.ref_name }}".TrimStart("v")
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DAppVersion=$ver /DAppArch=${{ matrix.arch }} /DBinary=${{ matrix.artifact }} resources\windows\installer.iss
 
       - uses: softprops/action-gh-release@v2
         with:
-          files: ${{ matrix.artifact }}
+          files: |
+            ${{ startsWith(matrix.os, 'ubuntu') && format('jobtracker-desktop-linux-{0}.tar.gz', matrix.arch) || (matrix.os == 'macos-latest' && 'JobTracker-darwin-arm64.dmg' || matrix.artifact) }}
+            ${{ startsWith(matrix.os, 'windows') && format('jobtracker-desktop-windows-{0}-setup.exe', matrix.arch) || '' }}
