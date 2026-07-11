@@ -3,9 +3,11 @@ package handler
 import (
 	"encoding/csv"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/tecnologer/jobtracker/store"
@@ -25,8 +27,10 @@ func (h *Handler) List(w http.ResponseWriter, _ *http.Request) {
 	jobs, err := h.store.List()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
+
 	writeJSON(w, http.StatusOK, jobs)
 }
 
@@ -36,6 +40,7 @@ func (h *Handler) List(w http.ResponseWriter, _ *http.Request) {
 func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
+
 	if err := json.NewEncoder(w).Encode(v); err != nil {
 		log.Printf("encoding JSON response: %v", err)
 	}
@@ -45,25 +50,50 @@ func (h *Handler) Stats(w http.ResponseWriter, _ *http.Request) {
 	stats, err := h.store.Stats(time.Now())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
+
 	writeJSON(w, http.StatusOK, stats)
 }
 
-// ExportCSV streams every job as a CSV attachment. applied_at is rendered as a
-// wall date (YYYY-MM-DD) in its own stored offset so the day never shifts for
-// the viewer's timezone; created_at is a real instant, rendered in full RFC3339.
-// Next Meeting is each job's soonest upcoming meeting (scheduled_at >= now),
-// computed with a single grouped query rather than one lookup per row.
-func (h *Handler) ExportCSV(w http.ResponseWriter, _ *http.Request) {
+// ExportCSV streams jobs as a CSV attachment. An optional ids query param
+// (comma-separated job IDs) restricts the export to those jobs — the frontend
+// sends the currently visible (filtered) grid, whose filter logic lives
+// client-side only. A present-but-empty ids param means an empty grid and
+// yields a header-only export; an absent param exports everything. applied_at
+// is rendered as a wall date (YYYY-MM-DD) in its own stored offset so the day
+// never shifts for the viewer's timezone; created_at is a real instant,
+// rendered in full RFC3339. Next Meeting is each job's soonest upcoming
+// meeting (scheduled_at >= now), computed with a single grouped query rather
+// than one lookup per row.
+func (h *Handler) ExportCSV(w http.ResponseWriter, r *http.Request) {
+	var keep map[uint]bool // nil: no ids param, export everything
+	if rawIDs, ok := r.URL.Query()["ids"]; ok {
+		var err error
+		keep, err = parseIDSet(rawIDs[0])
+		if err != nil {
+			http.Error(w, "invalid ids parameter", http.StatusBadRequest)
+
+			return
+		}
+	}
+
 	jobs, err := h.store.List()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	// ponytail: filters in memory after List(); push into the store query if job counts ever get big
+	if keep != nil {
+		jobs = filterJobs(jobs, keep)
+	}
+
 	nextMeetings, err := h.store.NextMeetingTimes()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 
@@ -85,6 +115,37 @@ func (h *Handler) ExportCSV(w http.ResponseWriter, _ *http.Request) {
 			return
 		}
 	}
+}
+
+// filterJobs keeps only the jobs whose ID is in keep. Filters in place.
+func filterJobs(jobs []store.Job, keep map[uint]bool) []store.Job {
+	kept := jobs[:0]
+	for _, job := range jobs {
+		if keep[job.ID] {
+			kept = append(kept, job)
+		}
+	}
+	return kept
+}
+
+// parseIDSet parses a comma-separated ID list (whitespace tolerated, empty
+// segments skipped) into a membership set. An empty string returns an empty
+// set that matches nothing — the frontend sends the visible grid, which can
+// be empty.
+func parseIDSet(rawIDs string) (map[uint]bool, error) {
+	keep := map[uint]bool{}
+	for part := range strings.SplitSeq(rawIDs, ",") {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		id, err := strconv.ParseUint(part, 10, 32)
+		if err != nil {
+			return nil, fmt.Errorf("parsing job id %q: %w", part, err)
+		}
+		keep[uint(id)] = true
+	}
+	return keep, nil
 }
 
 // csvRow renders one job as a CSV record; see ExportCSV for column semantics.

@@ -2,9 +2,12 @@ package handler
 
 import (
 	"encoding/csv"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -58,6 +61,88 @@ func TestExportCSV(t *testing.T) {
 	assert.Equal(t, "2026-07-01", got[5], "applied_at is a wall date, unaffected by viewer timezone")
 	assert.Equal(t, yes, got[7], "TopMatch: true")
 	assert.Empty(t, got[11], "no meetings scheduled for this job")
+}
+
+func TestExportCSVIDs(t *testing.T) {
+	t.Parallel()
+
+	st, err := store.Open(filepath.Join(t.TempDir(), "jobs.db"))
+	require.NoError(t, err)
+
+	first := &store.Job{
+		Company:  "Acme",
+		Position: "Engineer",
+		Status:   store.StatusApplied,
+	}
+	second := &store.Job{
+		Company:  "Globex",
+		Position: "Manager",
+		Status:   store.StatusApplied,
+	}
+	require.NoError(t, st.Create(first))
+	require.NoError(t, st.Create(second))
+
+	h := New(st)
+
+	tests := []struct {
+		name          string
+		query         string
+		wantCode      int
+		wantCompanies []string
+	}{
+		{
+			name:          "subset_of_ids_exports_only_those_jobs",
+			query:         "?ids=" + strconv.FormatUint(uint64(second.ID), 10),
+			wantCode:      http.StatusOK,
+			wantCompanies: []string{"Globex"},
+		},
+		{
+			name: "multiple_ids_with_whitespace_and_trailing_comma",
+			query: "?ids=" + url.QueryEscape(fmt.Sprintf(" %d , %d ,",
+				first.ID, second.ID)),
+			wantCode:      http.StatusOK,
+			wantCompanies: []string{"Acme", "Globex"},
+		},
+		{
+			name:          "empty_ids_param_exports_no_jobs",
+			query:         "?ids=",
+			wantCode:      http.StatusOK,
+			wantCompanies: []string{},
+		},
+		{
+			name:          "unknown_id_yields_empty_export",
+			query:         "?ids=999999",
+			wantCode:      http.StatusOK,
+			wantCompanies: []string{},
+		},
+		{
+			name:     "non_numeric_ids_rejected",
+			query:    "?ids=abc",
+			wantCode: http.StatusBadRequest,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			rec := httptest.NewRecorder()
+			h.ExportCSV(rec, httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/api/jobs/export"+test.query, nil))
+
+			require.Equal(t, test.wantCode, rec.Code)
+			if test.wantCode != http.StatusOK {
+				return
+			}
+
+			rows, err := csv.NewReader(strings.NewReader(rec.Body.String())).ReadAll()
+			require.NoError(t, err, "parse CSV")
+			companies := []string{}
+			for _, row := range rows[1:] {
+				companies = append(companies, row[1])
+			}
+			assert.Equal(t, test.wantCompanies, companies)
+		})
+	}
 }
 
 func TestExportCSVNextMeeting(t *testing.T) {
