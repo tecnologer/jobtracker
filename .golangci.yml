@@ -19,6 +19,7 @@ linters:
     - funcorder                # Disabled during v2 conversion - new linting errors
     - embeddedstructfieldcheck # Disabled during v2 conversion - new linting errors
     - wsl                      # Deprecated and replaced with wsl_v5 since v2.2.0
+    - gomodguard               # Deprecated and replaced with gomodguard_v2 since v2.12.0
   settings:
     dupl:
       threshold: 1000
@@ -52,10 +53,12 @@ linters:
           - cyclop # long linear test bodies are fine; splitting them hurts readability
           - funlen # same reasoning as cyclop
           - goconst # repeated fixture literals in tests read better inline
+          - gochecknoglobals # shared test fixtures as globals are fine
     paths:
       - third_party$
       - builtin$
       - examples$
+      - web/node_modules
 formatters:
   enable:
     - gci
@@ -68,3 +71,4 @@ formatters:
       - third_party$
       - builtin$
       - examples$
+      - web/node_modules
