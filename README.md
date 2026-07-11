@@ -2,7 +2,8 @@
 
 Track job applications — Go REST API + Vue 3 SPA.
 
-<img width="1197" height="628" alt="image" src="https://github.com/user-attachments/assets/e216a7f7-6ab2-4c50-b913-0123d9d73194" />
+<img width="1202" height="472" alt="image" src="https://github.com/user-attachments/assets/c2d4c882-0a43-4c1f-abc3-8aa1f30077f9" />
+
 
 
 ## Authentication
