@@ -36,13 +36,13 @@
     </div>
     <div class="flex gap-2 justify-end">
       <button
-        class="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+        class="min-h-11 md:min-h-0 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm font-medium px-4 py-2 rounded-lg transition-colors"
         @click="emit('close')"
       >
         Cancel
       </button>
       <button
-        class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+        class="min-h-11 md:min-h-0 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
         @click="emit('confirm', { notes, newStatus })"
       >
         Save

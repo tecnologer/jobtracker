@@ -95,6 +95,13 @@ export function useJobFilters() {
     topMatchOnly.value = !topMatchOnly.value
   }
 
+  // touch tap-to-toggle (FR-10): bound via @touchstart.prevent, which suppresses the
+  // browser's synthetic mousedown/mouseup/click replay for this interaction, so it
+  // never double-fires alongside chipMousedown below. Drag-select stays mouse-only.
+  function chipTap(arr, val) {
+    toggleFilter(arr, val)
+  }
+
   function chipMousedown(arr, val) {
     const adding = !arr.includes(val)
     toggleFilter(arr, val)
@@ -116,6 +123,6 @@ export function useJobFilters() {
     filteredJobs, isFiltered, activeFilterCount, isActiveOnly,
     stageDropdownOpen, stageSearch, allFilterStages, filteredDropdownStages,
     clearFilter, toggleActiveOnly, toggleArchivedOnly, toggleTopMatchOnly,
-    chipMousedown, chipMouseenter, chipMouseup,
+    chipTap, chipMousedown, chipMouseenter, chipMouseup,
   }
 }

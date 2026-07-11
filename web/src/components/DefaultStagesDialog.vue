@@ -8,7 +8,7 @@
         Default Stages
       </h3>
       <button
-        class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg leading-none"
+        class="min-h-11 min-w-11 inline-flex items-center justify-center md:min-h-0 md:min-w-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg leading-none"
         @click="emit('close')"
       >
         ✕

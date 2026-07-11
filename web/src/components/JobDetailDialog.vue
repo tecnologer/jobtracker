@@ -1,11 +1,12 @@
 <template>
   <BaseDialog
-    width="w-[62vw] max-h-[90vh] overflow-y-auto"
+    sheet
+    width="w-full h-full overflow-y-auto md:w-[min(90vw,42rem)] md:h-auto md:max-h-[90vh] lg:w-[62vw]"
     @close="emit('close')"
   >
     <div class="flex justify-between items-start mb-4 gap-3">
       <div class="flex-1 flex flex-col gap-2">
-        <div class="flex gap-2">
+        <div class="flex flex-col md:flex-row gap-2">
           <div class="flex flex-col gap-1 flex-1">
             <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Company</label>
             <input
@@ -23,7 +24,7 @@
             >
           </div>
         </div>
-        <div class="flex items-end gap-2">
+        <div class="flex flex-col gap-2 md:flex-row md:items-end">
           <div class="flex flex-col gap-1">
             <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Status</label>
             <select
@@ -80,6 +81,7 @@
         <button
           :title="job.top_match ? 'Remove top match' : 'Mark as top match'"
           :aria-label="job.top_match ? 'Remove top match' : 'Mark as top match'"
+          class="min-h-11 min-w-11 md:min-h-0 md:min-w-0 inline-flex items-center justify-center"
           @click="toggleTopMatch(job)"
         >
           <svg
@@ -96,7 +98,7 @@
           </svg>
         </button>
         <button
-          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg leading-none"
+          class="min-h-11 min-w-11 md:min-h-0 md:min-w-0 inline-flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg leading-none"
           @click="emit('close')"
         >
           ✕
@@ -249,7 +251,7 @@
         class="flex flex-col gap-2"
         @submit.prevent="addContact"
       >
-        <div class="flex gap-2">
+        <div class="flex flex-col md:flex-row gap-2">
           <input
             v-model="newContact.name"
             placeholder="Name"
@@ -262,7 +264,7 @@
             class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
         </div>
-        <div class="flex gap-2">
+        <div class="flex flex-col md:flex-row gap-2">
           <input
             v-model="newContact.email"
             placeholder="Email"
@@ -277,7 +279,7 @@
         </div>
         <button
           type="submit"
-          class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+          class="min-h-11 md:min-h-0 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
         >
           Add Contact
         </button>
@@ -424,7 +426,7 @@
         class="flex flex-col gap-2"
         @submit.prevent="addMeeting"
       >
-        <div class="flex gap-2">
+        <div class="flex flex-col md:flex-row gap-2">
           <input
             v-model="newMeeting.title"
             placeholder="Title"
@@ -438,7 +440,7 @@
             class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
         </div>
-        <div class="flex gap-2">
+        <div class="flex flex-col md:flex-row gap-2">
           <input
             v-model="newMeeting.url"
             placeholder="URL"
@@ -453,7 +455,7 @@
         </div>
         <button
           type="submit"
-          class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+          class="min-h-11 md:min-h-0 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
         >
           Add Meeting
         </button>
@@ -462,13 +464,13 @@
 
     <div class="flex gap-2 justify-end mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
       <button
-        class="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+        class="min-h-11 md:min-h-0 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm font-medium px-4 py-2 rounded-lg transition-colors"
         @click="emit('close')"
       >
         Cancel
       </button>
       <button
-        class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+        class="min-h-11 md:min-h-0 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
         @click="saveDetail"
       >
         Save
@@ -486,7 +488,7 @@
           Manage Stages
         </h3>
         <button
-          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg leading-none"
+          class="min-h-11 min-w-11 inline-flex items-center justify-center md:min-h-0 md:min-w-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg leading-none"
           @click="stagesMgmt = false"
         >
           ✕

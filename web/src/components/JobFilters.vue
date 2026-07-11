@@ -1,8 +1,8 @@
 <template>
   <div class="mb-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2">
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-2 flex-wrap">
       <button
-        class="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors select-none py-1 flex-1"
+        class="min-h-11 md:min-h-0 flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors select-none py-1 flex-1"
         @click="filtersOpen = !filtersOpen"
       >
         <svg
@@ -24,21 +24,21 @@
       </button>
       <button
         :class="archivedOnly ? 'bg-amber-100 dark:bg-amber-900 text-amber-600 dark:text-amber-300 ring-2 ring-current' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'"
-        class="text-xs px-2.5 py-1 rounded-full font-medium transition-colors shrink-0"
+        class="min-h-11 md:min-h-0 inline-flex items-center justify-center text-xs px-2.5 py-1 rounded-full font-medium transition-colors shrink-0"
         @click="toggleArchivedOnly"
       >
         Archived only
       </button>
       <button
         :class="isActiveOnly ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 ring-2 ring-current' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'"
-        class="text-xs px-2.5 py-1 rounded-full font-medium transition-colors shrink-0"
+        class="min-h-11 md:min-h-0 inline-flex items-center justify-center text-xs px-2.5 py-1 rounded-full font-medium transition-colors shrink-0"
         @click="toggleActiveOnly"
       >
         Active only
       </button>
       <button
         :class="topMatchOnly ? 'bg-amber-100 dark:bg-amber-900 text-amber-600 dark:text-amber-300 ring-2 ring-current' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'"
-        class="text-xs px-2.5 py-1 rounded-full font-medium transition-colors shrink-0"
+        class="min-h-11 md:min-h-0 inline-flex items-center justify-center text-xs px-2.5 py-1 rounded-full font-medium transition-colors shrink-0"
         @click="toggleTopMatchOnly"
       >
         Top matches
@@ -65,9 +65,10 @@
           v-for="s in statuses"
           :key="s"
           :class="filter.statuses.includes(s) ? statusClass(s) + ' ring-2 ring-offset-1 ring-current' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'"
-          class="px-2 py-0.5 rounded-full text-xs font-medium transition-colors cursor-pointer"
+          class="min-h-11 md:min-h-0 inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-medium transition-colors cursor-pointer"
           @mousedown.prevent="chipMousedown(filter.statuses, s)"
           @mouseenter="chipMouseenter(filter.statuses, s)"
+          @touchstart.prevent="chipTap(filter.statuses, s)"
           @dragstart.prevent
         >
           {{ s.replace('_', ' ') }}
@@ -75,12 +76,12 @@
       </div>
 
       <!-- Row 3: stage dropdown + applied date -->
-      <div class="flex gap-3 items-center">
+      <div class="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:gap-3 lg:flex-nowrap">
         <div class="flex items-center gap-1.5">
           <span class="text-xs text-gray-400 dark:text-gray-500">Stage:</span>
           <div class="relative">
             <button
-              class="flex items-center justify-between gap-1 w-44 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1 text-xs bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              class="min-h-11 md:min-h-0 flex items-center justify-between gap-1 w-44 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1 text-xs bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               @click="stageDropdownOpen = !stageDropdownOpen"
             >
               Stage{{ filter.stages.length ? ` (${filter.stages.length})` : '' }}
@@ -173,7 +174,7 @@ const {
   isFiltered, activeFilterCount, isActiveOnly,
   stageDropdownOpen, stageSearch, allFilterStages, filteredDropdownStages,
   clearFilter, toggleActiveOnly, toggleArchivedOnly, toggleTopMatchOnly,
-  chipMousedown, chipMouseenter, chipMouseup,
+  chipTap, chipMousedown, chipMouseenter, chipMouseup,
 } = useJobFilters()
 
 function onEsc(e) {
