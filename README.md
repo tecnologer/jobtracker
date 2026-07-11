@@ -1,9 +1,50 @@
 # Job Tracker
 
+![Job Tracker](resources/images/icons/social-banner.png)
+
 Track job applications — Go REST API + Vue 3 SPA.
 
-<img width="1202" height="472" alt="image" src="https://github.com/user-attachments/assets/c2d4c882-0a43-4c1f-abc3-8aa1f30077f9" />
+Job Tracker keeps every application you send in one place and shows you where
+each one stands:
 
+- **Applications** — company, position, salary, links, notes, and a "top match"
+  flag; filter and search the list, export it to CSV.
+- **Custom pipeline stages** — define your own stage templates (Applied,
+  Screening, Interview, Offer, …); each job gets its own copy you can tweak.
+- **Stage history** — every stage change is logged with a timestamp, so you can
+  see how an application progressed over time.
+- **Contacts & meetings** — recruiters/interviewers per job, plus scheduled
+  meetings with an upcoming-meetings view.
+- **Dashboard** — KPIs, status breakdown, stage funnel, and average time spent
+  per stage.
+- **Dark mode**, because of course.
+
+Everything is stored in a single SQLite file — no external services. It ships
+in two flavors from the same codebase: a self-hosted **web app** (Basic Auth)
+and a **native desktop app** (Wails) with no auth and no network listener.
+
+## Download (desktop app)
+
+Prebuilt desktop builds are published on the
+[Releases page](https://github.com/tecnologer/jobtracker/releases):
+
+- **Linux** — `jobtracker-desktop-linux-{amd64,arm64}.tar.gz`
+- **Windows** — `jobtracker-desktop-windows-{amd64,arm64}-setup.exe` installer
+- **macOS** — `JobTracker-darwin-arm64.dmg`
+
+No setup required — data is stored in your OS user data directory. If you'd
+rather run the web version or build from source, read on.
+
+## Live demo
+
+Try it at https://jobtracker.tecnologer.net/ — log in via the browser's Basic Auth prompt:
+
+- **User:** `demo@tecnologer.net`
+- **Password:** `>J0bTr4ker.v2<`
+
+## Screenshot
+
+<img width="1202" height="472" alt="Job Tracker screenshot" src="https://github.com/user-attachments/assets/c2d4c882-0a43-4c1f-abc3-8aa1f30077f9" />
 
 
 ## Authentication
