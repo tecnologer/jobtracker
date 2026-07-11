@@ -13,6 +13,7 @@ func Routes(h *Handler, static http.Handler) *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/jobs", h.List)
 	mux.HandleFunc("GET /api/stats", h.Stats)
+	mux.HandleFunc("GET /api/version", h.Version)
 	mux.HandleFunc("GET /api/jobs/export", h.ExportCSV)
 	mux.HandleFunc("POST /api/jobs", h.Create)
 	mux.HandleFunc("PUT /api/jobs/{id}", h.Update)

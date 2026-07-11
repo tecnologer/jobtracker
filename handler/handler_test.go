@@ -294,9 +294,25 @@ func TestStats(t *testing.T) {
 	assert.Equal(t, 1, stats.Funnel[0].JobsReached)
 
 	// wire shape: snake_case keys the frontend contract relies on
-	for _, key := range []string{"total_jobs", "active_jobs", "offers", "rejection_rate", "avg_days_to_first_response", "status_breakdown", "funnel", "jobs_reached", "avg_days", "sort_order"} {
+	for _, key := range []string{
+		"total_jobs", "active_jobs", "offers", "rejection_rate", "avg_days_to_first_response",
+		"status_breakdown", "funnel", "jobs_reached", "avg_days", "sort_order",
+	} {
 		assert.Contains(t, body, `"`+key+`"`)
 	}
+}
+
+func TestVersion(t *testing.T) {
+	t.Parallel()
+
+	mux, _ := newMux(t)
+
+	rec := do(t, mux, http.MethodGet, "/api/version", "")
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	var body map[string]string
+	decode(t, rec, &body)
+	assert.Equal(t, "dev", body["version"]) // ldflags-stamped in real builds
 }
 
 func newMux(t *testing.T) (*http.ServeMux, *store.Store) {
@@ -309,6 +325,7 @@ func newMux(t *testing.T) (*http.ServeMux, *store.Store) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/jobs", h.List)
 	mux.HandleFunc("GET /api/stats", h.Stats)
+	mux.HandleFunc("GET /api/version", h.Version)
 	mux.HandleFunc("GET /api/jobs/export", h.ExportCSV)
 	mux.HandleFunc("POST /api/jobs", h.Create)
 	mux.HandleFunc("PUT /api/jobs/{id}", h.Update)
