@@ -27,6 +27,9 @@ export const setTopMatch = (id, topMatch) => request(`/api/jobs/${id}/top-match`
 // dashboard stats
 export const fetchStats = () => get('/api/stats')
 
+// build version (ldflags-injected; "dev" in local dev)
+export const fetchVersion = () => get('/api/version')
+
 // stage logs
 export const fetchLogs = jobId => get(`/api/jobs/${jobId}/logs`)
 export const addLog = (jobId, body) => request(`/api/jobs/${jobId}/logs`, 'POST', body)

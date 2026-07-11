@@ -1,11 +1,11 @@
 <template>
   <div
-    :class="z"
-    class="fixed inset-0 bg-black/50 flex items-center justify-center p-4"
+    :class="[z, sheet ? 'p-0 md:p-4 items-stretch md:items-center' : 'p-4 items-center']"
+    class="fixed inset-0 bg-black/50 flex justify-center"
   >
     <div
-      :class="width"
-      class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6"
+      :class="[width, sheet ? 'rounded-none md:rounded-xl' : 'rounded-xl']"
+      class="bg-white dark:bg-gray-800 shadow-xl p-6"
     >
       <slot />
     </div>
@@ -28,6 +28,7 @@ import { onMounted, onUnmounted } from 'vue'
 defineProps({
   width: { type: String, default: 'w-full max-w-md' },
   z: { type: String, default: 'z-50' },
+  sheet: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['close'])
