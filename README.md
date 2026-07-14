@@ -2,7 +2,9 @@
 
 ![Job Tracker](resources/images/icons/social-banner.png)
 
-Track job applications — Go REST API + Vue 3 SPA.
+[![JobTracker Pro — pre-order](https://img.shields.io/badge/JobTracker%20Pro-pre--order-2ea44f)](https://jobtracker.tecnologer.net)
+
+Own your job search — open-source, local-first job tracker. Go REST API + Vue 3 SPA.
 
 Job Tracker keeps every application you send in one place and shows you where
 each one stands:
@@ -23,6 +25,31 @@ Everything is stored in a single SQLite file — no external services. It ships
 in two flavors from the same codebase: a self-hosted **web app** (Basic Auth)
 and a **native desktop app** (Wails) with no auth and no network listener.
 
+## JobTracker Pro (coming soon)
+
+The Community edition — this repo — stays free and open source (AGPL-3.0) with
+all of its current tracking features. **JobTracker Pro** is an optional paid
+upgrade that funds development of both editions: a one-time purchase with a
+license key, no subscription.
+
+Planned Pro features (in development):
+
+- **One-click browser clipper** — save a job posting from any site.
+- **Calendar / ICS reminders** — meetings and follow-ups in your own calendar.
+- **Résumé match score** — offline résumé-to-job-description matching.
+- **Advanced analytics** — deeper funnel and timing insights.
+- **Document vault** — résumés, cover letters, and offers per application.
+- **Priority support.**
+
+Pro keeps the same local-first design as Community: your data stays on your
+machine, no telemetry.
+
+**Founder pre-orders are open now** at an early-access price; the Pro desktop
+app ships **October 2026**. Not ready to commit? The same page has a
+no-commitment waitlist.
+
+→ **[Pre-order Pro or join the waitlist](https://jobtracker.tecnologer.net)**
+
 ## Download (desktop app)
 
 Prebuilt desktop builds are published on the
@@ -37,7 +64,7 @@ rather run the web version or build from source, read on.
 
 ## Live demo
 
-Try it at https://jobtracker.tecnologer.net/ — log in via the browser's Basic Auth prompt:
+Try it at https://aap.jobtracker.tecnologer.net/ — log in via the browser's Basic Auth prompt:
 
 - **User:** `demo@tecnologer.net`
 - **Password:** `>J0bTr4ker.v2<`
