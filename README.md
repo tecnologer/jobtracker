@@ -64,7 +64,7 @@ rather run the web version or build from source, read on.
 
 ## Live demo
 
-Try it at https://aap.jobtracker.tecnologer.net/ — log in via the browser's Basic Auth prompt:
+Try it at https://app.jobtracker.tecnologer.net/ — log in via the browser's Basic Auth prompt:
 
 - **User:** `demo@tecnologer.net`
 - **Password:** `>J0bTr4ker.v2<`
