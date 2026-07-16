@@ -8,25 +8,25 @@
       <div class="flex-1 flex flex-col gap-2">
         <div class="flex flex-col md:flex-row gap-2">
           <div class="flex flex-col gap-1 flex-1">
-            <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Company</label>
+            <label class="text-xs font-medium text-gray-600 dark:text-gray-400">{{ t('common.company') }}</label>
             <input
               v-model="edit.company"
-              placeholder="Company"
+              :placeholder="t('common.company')"
               class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm font-semibold bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
           </div>
           <div class="flex flex-col gap-1 flex-1">
-            <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Position</label>
+            <label class="text-xs font-medium text-gray-600 dark:text-gray-400">{{ t('common.position') }}</label>
             <input
               v-model="edit.position"
-              placeholder="Position"
+              :placeholder="t('common.position')"
               class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
           </div>
         </div>
         <div class="flex flex-col gap-2 md:flex-row md:items-end">
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Status</label>
+            <label class="text-xs font-medium text-gray-600 dark:text-gray-400">{{ t('common.status') }}</label>
             <select
               v-model="edit.status"
               class="border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 text-xs bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -36,30 +36,30 @@
                 :key="s"
                 :value="s"
               >
-                {{ s.replace('_', ' ') }}
+                {{ t('status.' + s) }}
               </option>
             </select>
           </div>
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Stage</label>
+            <label class="text-xs font-medium text-gray-600 dark:text-gray-400">{{ t('common.stage') }}</label>
             <div class="flex items-center gap-1">
               <select
                 v-model="edit.stage_id"
                 class="border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 text-xs bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option :value="0">
-                  No stage
+                  {{ t('common.noStage') }}
                 </option>
                 <option
                   v-for="s in stages"
                   :key="s.id"
                   :value="s.id"
                 >
-                  {{ s.name }}
+                  {{ tStage(s.name) }}
                 </option>
               </select>
               <button
-                title="Manage stages"
+                :title="t('detail.manageStagesTooltip')"
                 class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors leading-none"
                 @click="stagesMgmt = true"
               >
@@ -68,7 +68,7 @@
             </div>
           </div>
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Applied</label>
+            <label class="text-xs font-medium text-gray-600 dark:text-gray-400">{{ t('common.applied') }}</label>
             <input
               v-model="edit.applied_at"
               type="date"
@@ -79,8 +79,8 @@
       </div>
       <div class="flex items-center gap-2 shrink-0">
         <button
-          :title="job.top_match ? 'Remove top match' : 'Mark as top match'"
-          :aria-label="job.top_match ? 'Remove top match' : 'Mark as top match'"
+          :title="job.top_match ? t('jobs.removeTopMatch') : t('jobs.markTopMatch')"
+          :aria-label="job.top_match ? t('jobs.removeTopMatch') : t('jobs.markTopMatch')"
           class="min-h-11 min-w-11 md:min-h-0 md:min-w-0 inline-flex items-center justify-center"
           @click="toggleTopMatch(job)"
         >
@@ -108,21 +108,21 @@
 
     <div class="mb-4 pb-4 border-b border-gray-100 dark:border-gray-700 flex flex-col gap-2">
       <div class="flex flex-col gap-1">
-        <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Notes</label>
+        <label class="text-xs font-medium text-gray-600 dark:text-gray-400">{{ t('common.notes') }}</label>
         <textarea
           v-model="edit.notes"
           rows="2"
-          placeholder="Notes"
+          :placeholder="t('common.notes')"
           class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
         />
       </div>
       <div class="flex flex-col gap-1">
-        <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Job URL</label>
+        <label class="text-xs font-medium text-gray-600 dark:text-gray-400">{{ t('detail.jobUrl') }}</label>
         <div class="flex gap-2 items-center">
           <input
             v-model="edit.url"
             type="url"
-            placeholder="https://..."
+            :placeholder="t('detail.urlPlaceholder')"
             class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
           <a
@@ -131,7 +131,7 @@
             rel="noopener"
             :class="edit.url ? 'text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 cursor-pointer' : 'text-blue-500 dark:text-blue-400 opacity-25 pointer-events-none'"
             :aria-disabled="!edit.url"
-            title="Open job URL"
+            :title="t('detail.openJobUrl')"
             class="text-lg leading-none transition-colors shrink-0"
           >&#128279;</a>
         </div>
@@ -141,7 +141,7 @@
     <!-- Stage log -->
     <div class="mb-4 pb-4 border-b border-gray-100 dark:border-gray-700">
       <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-        Stage History
+        {{ t('detail.stageHistory') }}
       </p>
       <StageLogList
         v-if="logs.length"
@@ -151,14 +151,14 @@
         v-else
         class="text-sm text-gray-400 dark:text-gray-500"
       >
-        No stage history yet.
+        {{ t('detail.noStageHistory') }}
       </p>
     </div>
 
     <!-- Contacts -->
     <div>
       <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-        Contacts
+        {{ t('detail.contacts') }}
       </p>
       <ul
         v-if="contacts.length || pendingContacts.length"
@@ -181,8 +181,8 @@
             </div>
           </div>
           <button
-            aria-label="Remove contact"
-            title="Remove contact"
+            :aria-label="t('detail.removeContact')"
+            :title="t('detail.removeContact')"
             class="inline-flex items-center justify-center p-1.5 rounded text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition-colors shrink-0"
             @click="removeContact(c.id)"
           >
@@ -219,8 +219,8 @@
             </div>
           </div>
           <button
-            aria-label="Remove contact"
-            title="Remove contact"
+            :aria-label="t('detail.removeContact')"
+            :title="t('detail.removeContact')"
             class="inline-flex items-center justify-center p-1.5 rounded text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition-colors shrink-0"
             @click="pendingContacts.splice(i, 1)"
           >
@@ -245,7 +245,7 @@
         v-else
         class="text-sm text-gray-400 dark:text-gray-500 mb-4"
       >
-        No contacts yet.
+        {{ t('detail.noContactsYet') }}
       </p>
       <form
         class="flex flex-col gap-2"
@@ -254,26 +254,26 @@
         <div class="flex flex-col md:flex-row gap-2">
           <input
             v-model="newContact.name"
-            placeholder="Name"
+            :placeholder="t('common.name')"
             required
             class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
           <input
             v-model="newContact.role"
-            placeholder="Role"
+            :placeholder="t('common.role')"
             class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
         </div>
         <div class="flex flex-col md:flex-row gap-2">
           <input
             v-model="newContact.email"
-            placeholder="Email"
+            :placeholder="t('common.email')"
             type="email"
             class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
           <input
             v-model="newContact.phone"
-            placeholder="Phone"
+            :placeholder="t('common.phone')"
             class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
         </div>
@@ -281,7 +281,7 @@
           type="submit"
           class="min-h-11 md:min-h-0 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
         >
-          Add Contact
+          {{ t('detail.addContact') }}
         </button>
       </form>
     </div>
@@ -289,7 +289,7 @@
     <!-- Meetings -->
     <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
       <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-        Meetings
+        {{ t('detail.meetings') }}
       </p>
       <ul
         v-if="sortedMeetings.length"
@@ -307,7 +307,7 @@
           >
             <input
               v-model="editingMeeting.title"
-              placeholder="Title"
+              :placeholder="t('common.title')"
               required
               class="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
             >
@@ -319,14 +319,14 @@
             >
             <input
               v-model="editingMeeting.url"
-              placeholder="URL"
+              :placeholder="t('common.url')"
               type="url"
               class="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
             >
             <textarea
               v-model="editingMeeting.notes"
               rows="2"
-              placeholder="Notes"
+              :placeholder="t('common.notes')"
               class="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 resize-none"
             />
             <div class="flex gap-2 justify-end">
@@ -334,13 +334,14 @@
                 class="text-xs text-gray-500 dark:text-gray-400 px-2 py-1"
                 @click="editingMeeting = null"
               >
-                Cancel
+                {{ t('common.cancel') }}
               </button>
               <button
-                class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded"
+                :disabled="meetingBusy"
+                class="text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-2 py-1 rounded"
                 @click="saveMeetingEdit"
               >
-                Save
+                {{ t('common.save') }}
               </button>
             </div>
           </div>
@@ -371,8 +372,8 @@
             </div>
             <div class="flex gap-1 shrink-0">
               <button
-                aria-label="Edit meeting"
-                title="Edit meeting"
+                :aria-label="t('detail.editMeeting')"
+                :title="t('detail.editMeeting')"
                 class="inline-flex items-center justify-center p-1.5 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 transition-colors"
                 @click="editMeeting(m)"
               >
@@ -392,8 +393,8 @@
                 </svg>
               </button>
               <button
-                aria-label="Delete meeting"
-                title="Delete meeting"
+                :aria-label="t('detail.deleteMeeting')"
+                :title="t('detail.deleteMeeting')"
                 class="inline-flex items-center justify-center p-1.5 rounded text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition-colors"
                 @click="removeMeeting(m.id)"
               >
@@ -420,7 +421,7 @@
         v-else
         class="text-sm text-gray-400 dark:text-gray-500 mb-4"
       >
-        No meetings yet.
+        {{ t('detail.noMeetingsYet') }}
       </p>
       <form
         class="flex flex-col gap-2"
@@ -429,7 +430,7 @@
         <div class="flex flex-col md:flex-row gap-2">
           <input
             v-model="newMeeting.title"
-            placeholder="Title"
+            :placeholder="t('common.title')"
             required
             class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
@@ -443,21 +444,22 @@
         <div class="flex flex-col md:flex-row gap-2">
           <input
             v-model="newMeeting.url"
-            placeholder="URL"
+            :placeholder="t('common.url')"
             type="url"
             class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
           <input
             v-model="newMeeting.notes"
-            placeholder="Notes"
+            :placeholder="t('common.notes')"
             class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
         </div>
         <button
           type="submit"
-          class="min-h-11 md:min-h-0 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+          :disabled="meetingBusy"
+          class="min-h-11 md:min-h-0 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
         >
-          Add Meeting
+          {{ t('detail.addMeeting') }}
         </button>
       </form>
     </div>
@@ -467,13 +469,14 @@
         class="min-h-11 md:min-h-0 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm font-medium px-4 py-2 rounded-lg transition-colors"
         @click="emit('close')"
       >
-        Cancel
+        {{ t('common.cancel') }}
       </button>
       <button
-        class="min-h-11 md:min-h-0 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+        :disabled="saving"
+        class="min-h-11 md:min-h-0 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
         @click="saveDetail"
       >
-        Save
+        {{ t('common.save') }}
       </button>
     </div>
 
@@ -485,7 +488,7 @@
     >
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-gray-800 dark:text-gray-100">
-          Manage Stages
+          {{ t('detail.manageStagesTitle') }}
         </h3>
         <button
           class="min-h-11 min-w-11 inline-flex items-center justify-center md:min-h-0 md:min-w-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg leading-none"
@@ -520,6 +523,7 @@ import { statuses } from '../constants'
 import { isoToDate, formatDate, toRFC3339, toDatetimeLocal, isUrgent } from '../utils/dates'
 import { useJobs } from '../composables/useJobs'
 import { useMeetings } from '../composables/useMeetings'
+import { useI18n } from '../composables/useI18n'
 import BaseDialog from './BaseDialog.vue'
 import StageLogList from './StageLogList.vue'
 import StageListEditor from './StageListEditor.vue'
@@ -533,6 +537,7 @@ const emit = defineEmits(['close', 'saved'])
 
 const { toggleTopMatch } = useJobs()
 const { loadUpcomingMeetings } = useMeetings()
+const { t, tStage } = useI18n()
 
 const edit = ref({
   company: props.job.company, position: props.job.position, status: props.job.status,
@@ -550,6 +555,8 @@ const newMeeting = ref({ title: '', scheduled_at: '', url: '', notes: '' })
 const editingMeeting = ref(null)
 const stagesMgmt = ref(false)
 const stageComment = ref({ open: false, isLastStage: false })
+const saving = ref(false) // guards saveDetail/confirmStageComment against double-submit
+const meetingBusy = ref(false) // guards the add/edit meeting forms
 
 onMounted(async () => {
   const jobId = props.job.id
@@ -577,21 +584,33 @@ async function saveDetail() {
     stageComment.value = { open: true, isLastStage }
     return
   }
-  await Promise.all([
-    api.updateJob(props.job.id, edit.value),
-    ...contactRequests(),
-  ])
+  if (saving.value) return
+  saving.value = true
+  try {
+    await Promise.all([
+      api.updateJob(props.job.id, edit.value),
+      ...contactRequests(),
+    ])
+  } finally {
+    saving.value = false
+  }
   emit('saved')
 }
 
 async function confirmStageComment({ notes, newStatus }) {
+  if (saving.value) return
+  saving.value = true
   const { stage_id, ...rest } = edit.value
   if (stageComment.value.isLastStage && newStatus) rest.status = newStatus
-  await Promise.all([
-    api.addLog(props.job.id, { stage_id: stage_id || null, notes }),
-    api.updateJob(props.job.id, rest),
-    ...contactRequests(),
-  ])
+  try {
+    await Promise.all([
+      api.addLog(props.job.id, { stage_id: stage_id || null, notes }),
+      api.updateJob(props.job.id, rest),
+      ...contactRequests(),
+    ])
+  } finally {
+    saving.value = false
+  }
   stageComment.value.open = false
   emit('saved')
 }
@@ -624,12 +643,18 @@ async function refreshMeetings() {
 
 async function addMeeting() {
   if (!newMeeting.value.title || !newMeeting.value.scheduled_at) return
-  await api.addMeeting(props.job.id, {
-    title: newMeeting.value.title,
-    scheduled_at: toRFC3339(newMeeting.value.scheduled_at),
-    url: newMeeting.value.url,
-    notes: newMeeting.value.notes,
-  })
+  if (meetingBusy.value) return
+  meetingBusy.value = true
+  try {
+    await api.addMeeting(props.job.id, {
+      title: newMeeting.value.title,
+      scheduled_at: toRFC3339(newMeeting.value.scheduled_at),
+      url: newMeeting.value.url,
+      notes: newMeeting.value.notes,
+    })
+  } finally {
+    meetingBusy.value = false
+  }
   newMeeting.value = { title: '', scheduled_at: '', url: '', notes: '' }
   await refreshMeetings()
 }
@@ -641,12 +666,18 @@ function editMeeting(m) {
 async function saveMeetingEdit() {
   const meetingEdit = editingMeeting.value
   if (!meetingEdit.title || !meetingEdit.scheduled_at) return
-  await api.updateMeeting(props.job.id, meetingEdit.id, {
-    title: meetingEdit.title,
-    scheduled_at: toRFC3339(meetingEdit.scheduled_at),
-    url: meetingEdit.url,
-    notes: meetingEdit.notes,
-  })
+  if (meetingBusy.value) return
+  meetingBusy.value = true
+  try {
+    await api.updateMeeting(props.job.id, meetingEdit.id, {
+      title: meetingEdit.title,
+      scheduled_at: toRFC3339(meetingEdit.scheduled_at),
+      url: meetingEdit.url,
+      notes: meetingEdit.notes,
+    })
+  } finally {
+    meetingBusy.value = false
+  }
   editingMeeting.value = null
   await refreshMeetings()
 }
