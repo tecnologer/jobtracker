@@ -4,7 +4,7 @@
       <!-- plain navigation to /: leaves the dashboard view and reloads when already home -->
       <a
         href="/"
-        aria-label="Home"
+        :aria-label="t('header.home')"
         class="shrink-0"
       >
         <img
@@ -14,14 +14,14 @@
         >
       </a>
       <h1 class="text-lg md:text-2xl font-bold text-gray-800 dark:text-gray-100 truncate min-w-0">
-        Job Tracker
+        {{ t('header.title') }}
       </h1>
     </div>
     <div class="flex items-center gap-1.5 md:gap-2 shrink-0">
       <button
         :class="btn"
         :disabled="!jobs.length"
-        :aria-label="dashboardOpen ? 'Jobs' : 'Dashboard'"
+        :aria-label="dashboardOpen ? t('header.jobs') : t('header.dashboard')"
         @click="emit('toggle-view')"
       >
         <!-- briefcase (jobs) / chart-bar (dashboard) -->
@@ -63,7 +63,7 @@
         :href="filteredJobs.length ? exportHref : null"
         :aria-disabled="!filteredJobs.length || null"
         download
-        aria-label="Export CSV"
+        :aria-label="t('header.exportCsv')"
       >
         <!-- arrow-down-tray -->
         <svg
@@ -82,11 +82,41 @@
           />
         </svg>
       </a>
+      <button
+        :class="btn"
+        :disabled="importing"
+        :aria-label="t('header.importCsv')"
+        @click="importInput?.click()"
+      >
+        <!-- arrow-up-tray -->
+        <svg
+          class="h-5 w-5"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M7.5 7.5 12 3m0 0 4.5 4.5M12 3v13.5"
+          />
+        </svg>
+      </button>
+      <input
+        ref="importInput"
+        type="file"
+        accept=".csv"
+        class="hidden"
+        @change="onImportFile"
+      >
       <div class="relative">
         <button
           :class="btn"
           :disabled="!upcomingMeetings.length"
-          aria-label="Upcoming meetings"
+          :aria-label="t('header.upcomingMeetings')"
           @click="upcomingMeetingsOpen = !upcomingMeetingsOpen"
         >
           <!-- calendar-days -->
@@ -120,7 +150,7 @@
             v-if="!upcomingMeetings.length"
             class="px-3 py-2 text-xs text-gray-400 dark:text-gray-500"
           >
-            No upcoming meetings
+            {{ t('header.noUpcomingMeetings') }}
           </p>
           <button
             v-for="m in upcomingMeetings"
@@ -148,7 +178,7 @@
       </div>
       <button
         :class="btn"
-        aria-label="Default Stages"
+        :aria-label="t('header.defaultStages')"
         @click="defaultStagesMgmt = true"
       >
         <!-- queue-list -->
@@ -170,7 +200,7 @@
       </button>
       <button
         :class="btn"
-        :aria-label="dark ? 'Light mode' : 'Dark mode'"
+        :aria-label="dark ? t('header.lightMode') : t('header.darkMode')"
         @click="toggleDark"
       >
         <!-- sun / moon: shows the mode you switch to -->
@@ -207,11 +237,31 @@
           />
         </svg>
       </button>
+      <select
+        :value="locale"
+        :aria-label="t('header.language')"
+        class="min-h-11 md:min-h-9 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-sm px-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        @change="setLocale($event.target.value)"
+      >
+        <option
+          v-for="lang in languages"
+          :key="lang.code"
+          :value="lang.code"
+        >
+          {{ lang.name }}
+        </option>
+      </select>
     </div>
 
     <DefaultStagesDialog
       v-if="defaultStagesMgmt"
       @close="defaultStagesMgmt = false"
+    />
+    <ImportDialog
+      v-if="importResult"
+      :result="importResult"
+      @close="importResult = null"
+      @applied="onImportApplied"
     />
   </header>
 </template>
@@ -219,11 +269,14 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { formatDate, isUrgent } from '../utils/dates'
+import * as api from '../api'
 import { useJobs } from '../composables/useJobs'
 import { useJobFilters } from '../composables/useJobFilters'
 import { useMeetings } from '../composables/useMeetings'
 import { useDarkMode } from '../composables/useDarkMode'
+import { useI18n } from '../composables/useI18n'
 import DefaultStagesDialog from './DefaultStagesDialog.vue'
+import ImportDialog from './ImportDialog.vue'
 
 defineProps({
   dashboardOpen: { type: Boolean, default: false },
@@ -234,7 +287,7 @@ const emit = defineEmits(['open-job', 'toggle-view'])
 // shared icon-button style; .tip renders the CSS tooltip from aria-label
 const btn = 'tip relative min-h-11 min-w-11 md:min-h-9 md:min-w-9 inline-flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:pointer-events-none'
 
-const { jobs } = useJobs()
+const { jobs, loadJobs } = useJobs()
 const { filteredJobs } = useJobFilters()
 const { upcomingMeetings } = useMeetings()
 
@@ -242,9 +295,32 @@ const { upcomingMeetings } = useMeetings()
 const exportHref = computed(() =>
   `/api/jobs/export?ids=${filteredJobs.value.map(j => j.id).join(',')}`)
 const { dark, toggleDark } = useDarkMode()
+const { locale, languages, t, setLocale } = useI18n()
 
 const upcomingMeetingsOpen = ref(false)
 const defaultStagesMgmt = ref(false)
+
+const importInput = ref(null)
+const importing = ref(false)
+const importResult = ref(null)
+
+async function onImportFile(e) {
+  const file = e.target.files?.[0]
+  e.target.value = '' // allow re-selecting the same file later
+  if (!file) return
+
+  importing.value = true
+  try {
+    importResult.value = await api.importJobs(file)
+    await loadJobs()
+  } finally {
+    importing.value = false
+  }
+}
+
+async function onImportApplied() {
+  await loadJobs()
+}
 
 function openMeeting(m) {
   upcomingMeetingsOpen.value = false
