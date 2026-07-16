@@ -1,15 +1,36 @@
 import { dateToISO } from './utils/dates'
 
-function get(path) {
-  return fetch(path).then(r => r.json())
+// every non-2xx response throws, so a failed request can never be mistaken for
+// success; .status/.body let callers branch on typed errors (e.g. 409 duplicate)
+export class ApiError extends Error {
+  constructor(status, body, message) {
+    super(message)
+    this.status = status
+    this.body = body
+  }
 }
 
-function request(path, method, body) {
-  return fetch(path, {
+async function fail(res) {
+  const text = await res.text().catch(() => '')
+  let body = null
+  try { body = JSON.parse(text) } catch { /* plain-text error body (http.Error) */ }
+  return new ApiError(res.status, body, body?.error || text.trim() || `HTTP ${res.status}`)
+}
+
+async function get(path) {
+  const res = await fetch(path)
+  if (!res.ok) throw await fail(res)
+  return res.json()
+}
+
+async function request(path, method, body) {
+  const res = await fetch(path, {
     method,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
+  if (!res.ok) throw await fail(res)
+  return res
 }
 
 // shallow copy of a job payload with applied_at serialized to a timezone-aware timestamp
@@ -19,10 +40,19 @@ function jobBody(obj) {
 
 // jobs
 export const fetchJobs = () => get('/api/jobs')
-export const createJob = job => request('/api/jobs', 'POST', jobBody(job))
+export const createJob = (job, allowDuplicate = false) => request(`/api/jobs${allowDuplicate ? '?allow_duplicate=1' : ''}`, 'POST', jobBody(job))
 export const updateJob = (id, job) => request(`/api/jobs/${id}`, 'PUT', jobBody(job))
 export const deleteJob = id => request(`/api/jobs/${id}`, 'DELETE')
 export const setTopMatch = (id, topMatch) => request(`/api/jobs/${id}/top-match`, 'PUT', { top_match: topMatch })
+
+// CSV import: multipart upload, so it bypasses the JSON `request` wrapper above.
+export const importJobs = async file => {
+  const body = new FormData()
+  body.append('file', file)
+  const res = await fetch('/api/jobs/import', { method: 'POST', body })
+  if (!res.ok) throw await fail(res)
+  return res.json()
+}
 
 // dashboard stats
 export const fetchStats = () => get('/api/stats')
