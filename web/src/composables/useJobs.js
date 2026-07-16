@@ -13,12 +13,19 @@ export function useJobs() {
     await loadJobs()
   }
 
-  async function setArchived(job, archivedAt) {
-    await api.updateJob(job.id, {
+  // the one full-body payload for PUT /api/jobs/{id} — every update path (single or
+  // bulk) must build on this, never fork the field list, or a new model field would
+  // silently blank on the paths that forgot it
+  function jobPayload(job) {
+    return {
       company: job.company, position: job.position, status: job.status,
       applied_at: job.applied_at, notes: job.notes, url: job.url,
-      archived_at: archivedAt,
-    })
+      archived_at: job.archived_at,
+    }
+  }
+
+  async function setArchived(job, archivedAt) {
+    await api.updateJob(job.id, { ...jobPayload(job), archived_at: archivedAt })
     await loadJobs()
   }
 
@@ -33,5 +40,5 @@ export function useJobs() {
     await loadJobs()
   }
 
-  return { jobs, loadJobs, removeJob, setArchived, toggleTopMatch }
+  return { jobs, loadJobs, removeJob, setArchived, toggleTopMatch, jobPayload }
 }

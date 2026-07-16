@@ -6,14 +6,14 @@
         class="min-h-11 w-full mb-3 inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
         @click="addJobOpen = true"
       >
-        + Add job
+        + {{ t('jobs.addJob') }}
       </button>
 
       <p
         v-if="jobs.length === 0"
         class="text-center px-4 py-10 text-gray-400 dark:text-gray-500 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700"
       >
-        {{ totalCount === 0 ? 'No applications yet.' : 'No results match your filters.' }}
+        {{ totalCount === 0 ? t('jobs.noApplications') : t('jobs.noResultsFilter') }}
       </p>
 
       <ul
@@ -29,8 +29,8 @@
           <div class="flex items-start justify-between gap-2 mb-2">
             <div class="flex items-center gap-1.5 min-w-0">
               <button
-                :title="job.top_match ? 'Remove top match' : 'Mark as top match'"
-                :aria-label="job.top_match ? 'Remove top match' : 'Mark as top match'"
+                :title="job.top_match ? t('jobs.removeTopMatch') : t('jobs.markTopMatch')"
+                :aria-label="job.top_match ? t('jobs.removeTopMatch') : t('jobs.markTopMatch')"
                 class="min-h-11 min-w-11 shrink-0 inline-flex items-center justify-center"
                 @click.stop="toggleTopMatch(job)"
               >
@@ -56,7 +56,7 @@
               :class="statusClass(job.status)"
               class="shrink-0 inline-block px-2 py-0.5 rounded-full text-xs font-semibold"
             >
-              {{ job.status.replace('_', ' ') }}
+              {{ t('status.' + job.status) }}
             </span>
           </div>
 
@@ -79,7 +79,7 @@
           <div class="flex flex-col gap-1 mb-3">
             <div
               class="h-1.5 w-full bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden"
-              :title="job.stage?.name"
+              :title="tStage(job.stage?.name)"
             >
               <div
                 v-if="job.stage_id"
@@ -87,7 +87,7 @@
                 :style="`width: ${stageProgress(job)}%`"
               />
             </div>
-            <span class="text-xs text-gray-400 dark:text-gray-500">{{ job.stage?.name }}</span>
+            <span class="text-xs text-gray-400 dark:text-gray-500">{{ tStage(job.stage?.name) }}</span>
           </div>
 
           <div class="flex items-center justify-between">
@@ -95,8 +95,8 @@
             <div class="flex items-center gap-1">
               <button
                 v-if="job.archived_at"
-                aria-label="Unarchive"
-                title="Unarchive"
+                :aria-label="t('jobs.unarchive')"
+                :title="t('jobs.unarchive')"
                 class="min-h-11 min-w-11 inline-flex items-center justify-center rounded text-amber-600 hover:text-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 transition-colors"
                 @click.stop="setArchived(job, null)"
               >
@@ -117,8 +117,8 @@
               </button>
               <button
                 v-else
-                aria-label="Archive"
-                title="Archive"
+                :aria-label="t('jobs.archive')"
+                :title="t('jobs.archive')"
                 class="min-h-11 min-w-11 inline-flex items-center justify-center rounded text-amber-600 hover:text-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 transition-colors"
                 @click.stop="confirmArchive = { open: true, job }"
               >
@@ -138,8 +138,8 @@
                 </svg>
               </button>
               <button
-                aria-label="Delete"
-                title="Delete"
+                :aria-label="t('common.delete')"
+                :title="t('common.delete')"
                 class="min-h-11 min-w-11 inline-flex items-center justify-center rounded text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition-colors"
                 @click.stop="confirmDelete = { open: true, id: job.id }"
               >
@@ -164,39 +164,128 @@
       </ul>
     </div>
 
+    <!-- Bulk selection action bar (md+ only, like the selection itself) -->
+    <div
+      v-if="selected.size"
+      class="hidden md:flex flex-wrap items-center gap-2 mb-3 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-sm text-gray-700 dark:text-gray-200"
+    >
+      <span class="font-medium">{{ t('bulk.selected', { n: selected.size }) }}</span>
+      <button
+        :disabled="bulkBusy"
+        class="px-2 py-1 rounded text-amber-600 hover:text-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 disabled:opacity-50 transition-colors"
+        @click="bulkConfirm = { open: true, action: 'archive' }"
+      >
+        {{ t('jobs.archive') }}
+      </button>
+      <button
+        :disabled="bulkBusy"
+        class="px-2 py-1 rounded text-amber-600 hover:text-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 disabled:opacity-50 transition-colors"
+        @click="bulkUnarchive"
+      >
+        {{ t('jobs.unarchive') }}
+      </button>
+      <select
+        v-model="bulkStatus"
+        :disabled="bulkBusy"
+        :aria-label="t('stages.setStatus')"
+        class="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+        @change="onBulkStatusPick"
+      >
+        <option
+          value=""
+          disabled
+        >
+          {{ t('bulk.setStatus') }}
+        </option>
+        <option
+          v-for="s in statuses"
+          :key="s"
+          :value="s"
+        >
+          {{ t('status.' + s) }}
+        </option>
+      </select>
+      <a
+        :href="bulkExportHref"
+        class="px-2 py-1 rounded text-blue-600 hover:text-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 transition-colors"
+      >
+        {{ t('header.exportCsv') }}
+      </a>
+      <button
+        :disabled="bulkBusy"
+        class="px-2 py-1 rounded text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:opacity-50 transition-colors"
+        @click="bulkConfirm = { open: true, action: 'delete' }"
+      >
+        {{ t('common.delete') }}
+      </button>
+      <button
+        class="ml-auto px-2 py-1 rounded text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 transition-colors"
+        @click="selected = new Set()"
+      >
+        {{ t('bulk.clearSelection') }}
+      </button>
+    </div>
+
+    <!-- Bulk run outcome: "N succeeded, M failed" (FR-08) -->
+    <div
+      v-if="bulkResult"
+      class="hidden md:flex items-center gap-2 mb-3 px-4 py-2 rounded-lg border text-sm"
+      :class="bulkResult.failed ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300' : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300'"
+    >
+      <span>{{ t('bulk.result', { done: bulkResult.done, failed: bulkResult.failed }) }}</span>
+      <button
+        :aria-label="t('common.cancel')"
+        class="ml-auto text-lg leading-none opacity-60 hover:opacity-100"
+        @click="bulkResult = null"
+      >
+        ✕
+      </button>
+    </div>
+
     <!-- Tablet/desktop: table (FR-12/13) -->
     <div class="hidden md:block bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
       <table class="w-full table-fixed text-sm">
         <thead class="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
           <tr>
+            <th class="w-10 px-2 py-3 text-center">
+              <input
+                type="checkbox"
+                :checked="allSelected"
+                :indeterminate="selected.size > 0 && !allSelected"
+                :aria-label="t('bulk.selectAll')"
+                class="w-4 h-4 accent-blue-600 cursor-pointer align-middle"
+                @change="toggleSelectAll"
+              >
+            </th>
             <th class="w-[14%] lg:w-[12%] text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">
-              Company
+              {{ t('common.company') }}
             </th>
             <th class="w-[26%] lg:w-[20%] text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">
-              Position
+              {{ t('common.position') }}
             </th>
             <th class="w-[11%] lg:w-[9%] text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">
-              Status
+              {{ t('common.status') }}
             </th>
             <th class="w-[15%] lg:w-[12%] text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">
-              Stage
+              {{ t('common.stage') }}
             </th>
             <th class="w-[18%] lg:w-[14%] text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">
-              Applied
+              {{ t('common.applied') }}
             </th>
             <th class="hidden lg:table-cell lg:w-[22%] text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">
-              Notes
+              {{ t('common.notes') }}
             </th>
             <th class="w-[16%] lg:w-[12%] px-2 py-3" />
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
           <tr class="bg-blue-50/40 dark:bg-blue-900/10 border-b-2 border-blue-100 dark:border-blue-800">
+            <td class="px-2 py-2" />
             <td class="px-4 py-2">
               <input
                 ref="companyInput"
                 v-model="form.company"
-                placeholder="Company"
+                :placeholder="t('common.company')"
                 class="w-full border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-300 dark:placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 @keydown.enter.prevent="save"
               >
@@ -204,7 +293,7 @@
             <td class="px-4 py-2">
               <input
                 v-model="form.position"
-                placeholder="Position"
+                :placeholder="t('common.position')"
                 class="w-full border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-300 dark:placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 @keydown.enter.prevent="save"
               >
@@ -220,7 +309,7 @@
                   :key="s"
                   :value="s"
                 >
-                  {{ s.replace('_', ' ') }}
+                  {{ t('status.' + s) }}
                 </option>
               </select>
             </td>
@@ -236,26 +325,27 @@
             <td class="hidden lg:table-cell px-4 py-2">
               <input
                 v-model="form.notes"
-                placeholder="Notes"
+                :placeholder="t('common.notes')"
                 class="w-full border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-300 dark:placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 @keydown.enter.prevent="save"
               >
             </td>
             <td class="px-4 py-2 text-right pr-3">
               <button
-                class="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded"
+                :disabled="saving"
+                class="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded"
                 @click="save"
               >
-                Add
+                {{ t('common.add') }}
               </button>
             </td>
           </tr>
           <tr v-if="jobs.length === 0">
             <td
-              colspan="7"
+              colspan="8"
               class="text-center px-4 py-10 text-gray-400 dark:text-gray-500"
             >
-              {{ totalCount === 0 ? 'No applications yet.' : 'No results match your filters.' }}
+              {{ totalCount === 0 ? t('jobs.noApplications') : t('jobs.noResultsFilter') }}
             </td>
           </tr>
           <tr
@@ -265,6 +355,15 @@
             @click="onRowClick($event, job)"
             @dblclick="onRowDblClick($event, job)"
           >
+            <td class="px-2 py-3 text-center">
+              <input
+                type="checkbox"
+                :checked="selected.has(job.id)"
+                :aria-label="t('bulk.selectRow')"
+                class="w-4 h-4 accent-blue-600 cursor-pointer align-middle"
+                @change="toggleSelect(job.id)"
+              >
+            </td>
             <td class="px-4 py-3 font-medium text-gray-800 dark:text-gray-100">
               <div class="flex items-center gap-1.5">
                 <button
@@ -308,14 +407,14 @@
                 :class="statusClass(job.status)"
                 class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold"
               >
-                {{ job.status.replace('_', ' ') }}
+                {{ t('status.' + job.status) }}
               </span>
             </td>
             <td class="px-4 py-3">
               <div class="flex flex-col gap-1 min-w-32 max-w-40">
                 <div
                   class="h-1.5 w-full bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden"
-                  :title="job.stage?.name"
+                  :title="tStage(job.stage?.name)"
                 >
                   <div
                     v-if="job.stage_id"
@@ -323,7 +422,7 @@
                     :style="`width: ${stageProgress(job)}%`"
                   />
                 </div>
-                <span class="text-xs text-gray-400 dark:text-gray-500">{{ job.stage?.name }}</span>
+                <span class="text-xs text-gray-400 dark:text-gray-500">{{ tStage(job.stage?.name) }}</span>
               </div>
             </td>
             <td class="px-4 py-3 text-gray-500 dark:text-gray-400">
@@ -340,8 +439,8 @@
             <td class="px-2 py-3">
               <div class="flex flex-nowrap items-center gap-1 justify-end whitespace-nowrap">
                 <button
-                  aria-label="View details"
-                  title="View details"
+                  :aria-label="t('jobs.viewDetails')"
+                  :title="t('jobs.viewDetails')"
                   class="inline-flex items-center justify-center p-2 rounded text-green-600 hover:text-green-800 hover:bg-green-50 dark:hover:bg-green-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 transition-colors"
                   @click="emit('view', job)"
                 >
@@ -367,8 +466,8 @@
                 </button>
                 <button
                   v-if="job.archived_at"
-                  aria-label="Unarchive"
-                  title="Unarchive"
+                  :aria-label="t('jobs.unarchive')"
+                  :title="t('jobs.unarchive')"
                   class="inline-flex items-center justify-center p-2 rounded text-amber-600 hover:text-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 transition-colors"
                   @click="setArchived(job, null)"
                 >
@@ -389,8 +488,8 @@
                 </button>
                 <button
                   v-else
-                  aria-label="Archive"
-                  title="Archive"
+                  :aria-label="t('jobs.archive')"
+                  :title="t('jobs.archive')"
                   class="inline-flex items-center justify-center p-2 rounded text-amber-600 hover:text-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 transition-colors"
                   @click="confirmArchive = { open: true, job }"
                 >
@@ -410,8 +509,8 @@
                   </svg>
                 </button>
                 <button
-                  aria-label="Delete"
-                  title="Delete"
+                  :aria-label="t('common.delete')"
+                  :title="t('common.delete')"
                   class="inline-flex items-center justify-center p-2 rounded text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition-colors"
                   @click="confirmDelete = { open: true, id: job.id }"
                 >
@@ -439,21 +538,39 @@
 
     <ConfirmDialog
       v-if="confirmDelete.open"
-      title="Delete job application?"
-      message="This action cannot be undone."
-      confirm-label="Delete"
+      :title="t('jobs.deleteConfirmTitle')"
+      :message="t('jobs.deleteConfirmMessage')"
+      :confirm-label="t('common.delete')"
       tone="red"
       @confirm="doDelete"
       @close="confirmDelete.open = false"
     />
     <ConfirmDialog
       v-if="confirmArchive.open"
-      title="Archive job application?"
-      message="This marks the job as archived."
-      confirm-label="Archive"
+      :title="t('jobs.archiveConfirmTitle')"
+      :message="t('jobs.archiveConfirmMessage')"
+      :confirm-label="t('jobs.archive')"
       tone="amber"
       @confirm="doArchive"
       @close="confirmArchive.open = false"
+    />
+    <ConfirmDialog
+      v-if="bulkConfirm.open"
+      :title="bulkDialog.title"
+      :message="bulkDialog.message"
+      :confirm-label="bulkDialog.label"
+      :tone="bulkDialog.tone"
+      @confirm="bulkConfirmed"
+      @close="closeBulkConfirm"
+    />
+    <ConfirmDialog
+      v-if="confirmDuplicate.open"
+      :title="t('jobs.duplicateConfirmTitle')"
+      :message="duplicateMessage"
+      :confirm-label="t('jobs.createAnyway')"
+      tone="amber"
+      @confirm="saveDuplicate"
+      @close="confirmDuplicate = { open: false, duplicate: null }"
     />
 
     <!-- Phone: add-job dialog (FR-04), same fields/save() as the inline row -->
@@ -464,7 +581,7 @@
     >
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-gray-800 dark:text-gray-100">
-          Add Job
+          {{ t('jobs.addJobDialogTitle') }}
         </h3>
         <button
           class="min-h-11 min-w-11 inline-flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg leading-none"
@@ -478,25 +595,25 @@
         @submit.prevent="save"
       >
         <div class="flex flex-col gap-1">
-          <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Company</label>
+          <label class="text-xs font-medium text-gray-600 dark:text-gray-400">{{ t('common.company') }}</label>
           <input
             v-model="form.company"
-            placeholder="Company"
+            :placeholder="t('common.company')"
             required
             class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
         </div>
         <div class="flex flex-col gap-1">
-          <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Position</label>
+          <label class="text-xs font-medium text-gray-600 dark:text-gray-400">{{ t('common.position') }}</label>
           <input
             v-model="form.position"
-            placeholder="Position"
+            :placeholder="t('common.position')"
             required
             class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
         </div>
         <div class="flex flex-col gap-1">
-          <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Status</label>
+          <label class="text-xs font-medium text-gray-600 dark:text-gray-400">{{ t('common.status') }}</label>
           <select
             v-model="form.status"
             class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -506,12 +623,12 @@
               :key="s"
               :value="s"
             >
-              {{ s.replace('_', ' ') }}
+              {{ t('status.' + s) }}
             </option>
           </select>
         </div>
         <div class="flex flex-col gap-1">
-          <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Applied</label>
+          <label class="text-xs font-medium text-gray-600 dark:text-gray-400">{{ t('common.applied') }}</label>
           <input
             v-model="form.applied_at"
             type="date"
@@ -519,11 +636,11 @@
           >
         </div>
         <div class="flex flex-col gap-1">
-          <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Notes</label>
+          <label class="text-xs font-medium text-gray-600 dark:text-gray-400">{{ t('common.notes') }}</label>
           <textarea
             v-model="form.notes"
             rows="2"
-            placeholder="Notes"
+            :placeholder="t('common.notes')"
             class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
           />
         </div>
@@ -533,13 +650,14 @@
             class="min-h-11 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm font-medium px-4 py-2 rounded-lg transition-colors"
             @click="addJobOpen = false"
           >
-            Cancel
+            {{ t('common.cancel') }}
           </button>
           <button
             type="submit"
-            class="min-h-11 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            :disabled="saving"
+            class="min-h-11 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
           >
-            Save
+            {{ t('common.save') }}
           </button>
         </div>
       </form>
@@ -548,16 +666,17 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import * as api from '../api'
 import { statuses, statusClass } from '../constants'
 import { todayLocal, formatDay } from '../utils/dates'
 import { highlight, truncateNotes } from '../utils/text'
 import { useJobs } from '../composables/useJobs'
+import { useI18n } from '../composables/useI18n'
 import ConfirmDialog from './ConfirmDialog.vue'
 import BaseDialog from './BaseDialog.vue'
 
-defineProps({
+const props = defineProps({
   jobs: { type: Array, required: true },
   filterText: { type: String, default: '' },
   totalCount: { type: Number, required: true },
@@ -565,35 +684,146 @@ defineProps({
 
 const emit = defineEmits(['view'])
 
-const { loadJobs, removeJob, setArchived, toggleTopMatch } = useJobs()
+const { loadJobs, removeJob, setArchived, toggleTopMatch, jobPayload } = useJobs()
+const { t, tStage } = useI18n()
 
 function emptyForm() {
   return { company: '', position: '', status: 'applied', applied_at: todayLocal(), notes: '', url: '' }
 }
 
 const form = ref(emptyForm())
+const saving = ref(false)
 const companyInput = ref(null)
 const confirmDelete = ref({ open: false, id: null })
 const confirmArchive = ref({ open: false, job: null })
+const confirmDuplicate = ref({ open: false, duplicate: null })
 const addJobOpen = ref(false)
 
-async function save() {
+const duplicateMessage = computed(() => {
+  const dup = confirmDuplicate.value.duplicate
+  if (!dup) return ''
+  const applied = dup.applied_at ? t('jobs.duplicateAppliedOn', { date: formatDay(dup.applied_at) }) : ''
+  return t('jobs.duplicatePrompt', { company: dup.company, position: dup.position, applied })
+})
+
+async function save(allowDuplicate = false) {
   if (!form.value.company || !form.value.position) return
-  await api.createJob(form.value)
+  if (saving.value) return
+  saving.value = true
+  try {
+    await api.createJob(form.value, allowDuplicate === true)
+  } catch (err) {
+    if (err.status === 409) {
+      confirmDuplicate.value = { open: true, duplicate: err.body?.duplicate }
+      return
+    }
+    throw err // form state stays intact; global handler shows the toast
+  } finally {
+    saving.value = false
+  }
+  confirmDuplicate.value = { open: false, duplicate: null }
   form.value = emptyForm()
   await loadJobs()
   addJobOpen.value = false
   companyInput.value?.focus()
 }
 
+function saveDuplicate() {
+  return save(true)
+}
+
+// close the dialog before awaiting so a double-click can't fire the action twice
 async function doDelete() {
-  await removeJob(confirmDelete.value.id)
+  const { id } = confirmDelete.value
   confirmDelete.value = { open: false, id: null }
+  await removeJob(id)
 }
 
 async function doArchive() {
-  await setArchived(confirmArchive.value.job, new Date().toISOString())
+  const { job } = confirmArchive.value
   confirmArchive.value = { open: false, job: null }
+  await setArchived(job, new Date().toISOString())
+}
+
+// --- bulk selection (md+ table only; REQUIREMENTS-bulk-actions.md) ---
+const selected = ref(new Set()) // reassigned (never mutated) so reactivity is trivial
+const bulkBusy = ref(false)
+const bulkResult = ref(null) // { done, failed } after a bulk run
+const bulkConfirm = ref({ open: false, action: null }) // 'delete' | 'archive' | 'status'
+const bulkStatus = ref('')
+
+const allSelected = computed(() => props.jobs.length > 0 && props.jobs.every(j => selected.value.has(j.id)))
+const bulkExportHref = computed(() => `/api/jobs/export?ids=${[...selected.value].join(',')}`)
+
+const bulkDialog = computed(() => {
+  const n = selected.value.size
+  switch (bulkConfirm.value.action) {
+    case 'delete':
+      return { title: t('bulk.deleteConfirmTitle'), message: t('bulk.deleteConfirmMessage', { n }), label: t('common.delete'), tone: 'red' }
+    case 'archive':
+      return { title: t('bulk.archiveConfirmTitle'), message: t('bulk.archiveConfirmMessage', { n }), label: t('jobs.archive'), tone: 'amber' }
+    default:
+      return { title: t('bulk.statusConfirmTitle'), message: t('bulk.statusConfirmMessage', { n, status: t('status.' + bulkStatus.value) }), label: t('common.save'), tone: 'amber' }
+  }
+})
+
+function toggleSelect(id) {
+  const next = new Set(selected.value)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  selected.value = next
+}
+
+function toggleSelectAll() {
+  selected.value = allSelected.value ? new Set() : new Set(props.jobs.map(j => j.id))
+}
+
+// selection never outlives visibility: filter changes and deletions both flow
+// through the jobs prop, so pruning here covers FR-03 without watching filters
+watch(() => props.jobs, list => {
+  if (!selected.value.size) return
+  const visible = new Set(list.map(j => j.id))
+  selected.value = new Set([...selected.value].filter(id => visible.has(id)))
+})
+
+// sequential per-id calls, best-effort, one refresh at the end (FR-07/FR-08)
+async function runBulk(fn) {
+  bulkBusy.value = true
+  const targets = props.jobs.filter(j => selected.value.has(j.id))
+  let failed = 0
+  for (const job of targets) {
+    try {
+      await fn(job) // api.js throws on any non-2xx
+    } catch {
+      failed++
+    }
+  }
+  await loadJobs()
+  bulkResult.value = { done: targets.length - failed, failed }
+  selected.value = new Set()
+  bulkBusy.value = false
+}
+
+function onBulkStatusPick() {
+  if (bulkStatus.value) bulkConfirm.value = { open: true, action: 'status' }
+}
+
+function closeBulkConfirm() {
+  bulkConfirm.value = { open: false, action: null }
+  bulkStatus.value = ''
+}
+
+function bulkConfirmed() {
+  const action = bulkConfirm.value.action
+  const status = bulkStatus.value
+  closeBulkConfirm()
+  if (action === 'delete') return runBulk(job => api.deleteJob(job.id))
+  if (action === 'archive') return runBulk(job => api.updateJob(job.id, { ...jobPayload(job), archived_at: new Date().toISOString() }))
+  return runBulk(job => api.updateJob(job.id, { ...jobPayload(job), status }))
+}
+
+function bulkUnarchive() {
+  return runBulk(job => api.updateJob(job.id, { ...jobPayload(job), archived_at: null }))
 }
 
 function stageProgress(job) {
@@ -604,14 +834,14 @@ function stageProgress(job) {
 }
 
 function onRowDblClick(event, job) {
-  // ignore double-clicks on the row's own controls (star, URL, action icons)
-  if (event.target.closest('button, a')) return
+  // ignore double-clicks on the row's own controls (star, URL, action icons, checkbox)
+  if (event.target.closest('button, a, input')) return
   emit('view', job)
 }
 
 // tablet-only tap-to-open (FR-13): desktop (>= 1024px) keeps dblclick-only behavior
 function onRowClick(event, job) {
-  if (event.target.closest('button, a')) return
+  if (event.target.closest('button, a, input')) return
   if (window.innerWidth >= 1024) return
   emit('view', job)
 }
