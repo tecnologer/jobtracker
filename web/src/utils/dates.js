@@ -1,3 +1,5 @@
+import { locale } from '../composables/useI18n'
+
 // applied_at is edited as a local YYYY-MM-DD (date picker) but stored server-side as a
 // timezone-aware RFC3339 timestamp. These helpers convert between the two representations.
 export function todayLocal() {
@@ -35,7 +37,7 @@ export function formatDate(iso) {
   // render in the browser's local timezone, date and time
   const d = new Date(iso.length === 10 && iso[4] === '-' ? `${iso}T00:00:00` : iso)
   if (isNaN(d)) return ''
-  return d.toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
+  return d.toLocaleString(locale.value, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
 }
 
 // applied_at is a calendar date, not an instant: render the stored wall date as-is
@@ -43,7 +45,7 @@ export function formatDate(iso) {
 export function formatDay(iso) {
   const date = isoToDate(iso)
   if (!date) return ''
-  return new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+  return new Date(`${date}T00:00:00`).toLocaleDateString(locale.value, { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 // scheduled_at is a real instant (unlike applied_at's wall date): the datetime-local

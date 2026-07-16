@@ -6,7 +6,7 @@
       rel="noopener"
       class="hover:underline"
     >
-      AGPL-3.0 License
+      {{ t('footer.license') }}
     </a>
     ·
     <a
@@ -25,7 +25,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { fetchVersion } from '../api'
+import { useI18n } from '../composables/useI18n'
 
+const { t } = useI18n()
 const version = ref('dev')
 
 onMounted(async () => {

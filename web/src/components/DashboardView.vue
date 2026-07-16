@@ -4,7 +4,7 @@
       v-if="loading"
       class="py-12 text-center text-sm text-gray-400 dark:text-gray-500"
     >
-      Loading…
+      {{ t('dashboard.loading') }}
     </p>
 
     <div
@@ -12,13 +12,13 @@
       class="py-12 text-center"
     >
       <p class="mb-3 text-sm text-gray-600 dark:text-gray-300">
-        Failed to load stats.
+        {{ t('dashboard.failedToLoad') }}
       </p>
       <button
         class="text-sm px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
         @click="load"
       >
-        Retry
+        {{ t('dashboard.retry') }}
       </button>
     </div>
 
@@ -40,21 +40,21 @@
 
       <section class="mb-8">
         <h2 class="mb-3 text-sm font-semibold text-gray-800 dark:text-gray-100">
-          Status Breakdown
+          {{ t('dashboard.statusBreakdown') }}
         </h2>
         <BarList :rows="statusRows" />
       </section>
 
       <section class="mb-8">
         <h2 class="mb-3 text-sm font-semibold text-gray-800 dark:text-gray-100">
-          Stage Funnel
+          {{ t('dashboard.stageFunnel') }}
         </h2>
         <BarList :rows="funnelRows" />
       </section>
 
       <section class="mb-8">
         <h2 class="mb-3 text-sm font-semibold text-gray-800 dark:text-gray-100">
-          Avg Days per Stage
+          {{ t('dashboard.avgDaysPerStage') }}
         </h2>
         <BarList
           v-if="stageTimeRows.length"
@@ -64,7 +64,7 @@
           v-else
           class="text-sm text-gray-400 dark:text-gray-500"
         >
-          No stage timing data yet.
+          {{ t('dashboard.noStageTimingData') }}
         </p>
       </section>
     </template>
@@ -75,8 +75,10 @@
 import { ref, computed, onMounted } from 'vue'
 import { fetchStats } from '../api'
 import { statuses, statusBarClass } from '../constants'
+import { useI18n } from '../composables/useI18n'
 import BarList from './BarList.vue'
 
+const { t, tStage } = useI18n()
 const stats = ref(null)
 const loading = ref(false)
 const error = ref(false)
@@ -96,12 +98,12 @@ async function load() {
 onMounted(load)
 
 const kpis = computed(() => [
-  { label: 'Total Jobs', value: stats.value.total_jobs },
-  { label: 'Active', value: stats.value.active_jobs },
-  { label: 'Offers', value: stats.value.offers },
-  { label: 'Rejection Rate', value: `${Math.round(stats.value.rejection_rate * 100)}%` },
+  { label: t('dashboard.totalJobs'), value: stats.value.total_jobs },
+  { label: t('dashboard.active'), value: stats.value.active_jobs },
+  { label: t('dashboard.offers'), value: stats.value.offers },
+  { label: t('dashboard.rejectionRate'), value: `${Math.round(stats.value.rejection_rate * 100)}%` },
   {
-    label: 'Avg Days to Response',
+    label: t('dashboard.avgDaysToResponse'),
     value: stats.value.avg_days_to_first_response == null
       ? '—'
       : `${stats.value.avg_days_to_first_response.toFixed(1)}d`,
@@ -109,13 +111,13 @@ const kpis = computed(() => [
 ])
 
 const statusRows = computed(() => statuses.map(s => ({
-  label: s.replace('_', ' '),
+  label: t('status.' + s),
   value: stats.value.status_breakdown[s] ?? 0,
   barClass: statusBarClass(s),
 })))
 
 const funnelRows = computed(() => stats.value.funnel.map(s => ({
-  label: s.name,
+  label: tStage(s.name),
   value: s.jobs_reached,
 })))
 
@@ -123,7 +125,7 @@ const funnelRows = computed(() => stats.value.funnel.map(s => ({
 const stageTimeRows = computed(() => stats.value.funnel
   .filter(s => s.avg_days != null)
   .map(s => ({
-    label: s.name,
+    label: tStage(s.name),
     value: s.avg_days,
     display: `${s.avg_days.toFixed(1)}d`,
   })))

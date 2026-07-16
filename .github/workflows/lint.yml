@@ -7,6 +7,7 @@ on:
       - 'web/**/*.vue'
       - 'web/**/*.js'
       - 'web/**/*.ts'
+      - 'web/**/*.json'
       - 'web/eslint.config.js'
       - 'web/package.json'
       - 'web/package-lock.json'
@@ -40,6 +41,7 @@ jobs:
       # setup-node's eslint-stylish problem matcher turns this output
       # into inline PR annotations; no --fix in CI, errors fail the job
       - run: npm run lint
+      - run: npm run lint:locales
 
   golangci:
     runs-on: ubuntu-latest
