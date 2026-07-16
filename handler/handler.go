@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -14,6 +15,21 @@ import (
 )
 
 const yes = "yes"
+
+// Import caps (NFR-01): both are enforced before any row is processed.
+const (
+	maxImportBytes = 1 << 20 // 1 MB
+	maxImportRows  = 5000
+)
+
+// csvHeader is the CSV header contract shared by ExportCSV (writes it) and
+// ImportCSV (rejects any file whose header doesn't match it exactly).
+func csvHeader() []string {
+	return []string{
+		"ID", "Company", "Position", "Status", "Stage", "Applied At",
+		"Archived", "Top Match", "URL", "Notes", "Created At", "Next Meeting",
+	}
+}
 
 type Handler struct {
 	store *store.Store
@@ -103,10 +119,7 @@ func (h *Handler) ExportCSV(w http.ResponseWriter, r *http.Request) {
 	cw := csv.NewWriter(w)
 	defer cw.Flush()
 
-	if err := cw.Write([]string{
-		"ID", "Company", "Position", "Status", "Stage", "Applied At",
-		"Archived", "Top Match", "URL", "Notes", "Created At", "Next Meeting",
-	}); err != nil {
+	if err := cw.Write(csvHeader()); err != nil {
 		return
 	}
 
@@ -186,11 +199,258 @@ func csvRow(job store.Job, nextMeetings map[uint]time.Time) []string {
 	}
 }
 
+// importJobView is the wire shape of a parsed-but-not-created duplicate row:
+// the CSV Stage column is reported by name (raw, untrimmed match target) since
+// the client resolves it against the target job's own stage list.
+type importJobView struct {
+	Company   string     `json:"company"`
+	Position  string     `json:"position"`
+	Status    string     `json:"status"`
+	AppliedAt *time.Time `json:"applied_at"`
+	Stage     string     `json:"stage"`
+	Archived  bool       `json:"archived"`
+	TopMatch  bool       `json:"top_match"`
+	URL       string     `json:"url"`
+	Notes     string     `json:"notes"`
+}
+
+type importDuplicate struct {
+	Row      int           `json:"row"`
+	Job      importJobView `json:"job"`
+	Existing store.Job     `json:"existing"`
+}
+
+type importIssue struct {
+	Row     int    `json:"row"`
+	Message string `json:"message"`
+}
+
+type importResult struct {
+	Created       int               `json:"created"`
+	StagesCreated int               `json:"stages_created"`
+	Duplicates    []importDuplicate `json:"duplicates"`
+	Errors        []importIssue     `json:"errors"`
+	Warnings      []importIssue     `json:"warnings"`
+}
+
+// ImportCSV accepts a multipart file (field "file") produced by ExportCSV and
+// creates jobs from it, best-effort per row (FR-05): rows that fail to parse
+// don't block valid rows, and are reported by 1-based row number (header = row
+// 1). Rows that FindDuplicate matches — including rows created earlier in the
+// same file, since store.Create commits immediately — are not created; they
+// are returned for the client to resolve via the existing job endpoints (see
+// REQUIREMENTS.md phase 2). A header or size/row-count mismatch rejects the
+// whole file with 400 before any row is processed (FR-01, NFR-01).
+func (h *Handler) ImportCSV(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, maxImportBytes)
+	//nolint:gosec // G120 false positive: r.Body is already capped by MaxBytesReader above (NFR-01)
+	if err := r.ParseMultipartForm(maxImportBytes); err != nil {
+		http.Error(w, "file too large (max 1 MB) or invalid upload", http.StatusBadRequest)
+		return
+	}
+	file, _, err := r.FormFile("file")
+	if err != nil {
+		http.Error(w, "missing file", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	cr := csv.NewReader(file)
+	cr.FieldsPerRecord = -1 // rows with the wrong column count are row errors, not a rejected file
+
+	header, err := cr.Read()
+	if err != nil {
+		http.Error(w, "invalid CSV file", http.StatusBadRequest)
+		return
+	}
+	if !slices.Equal(header, csvHeader()) {
+		http.Error(w, "CSV header does not match the expected export format", http.StatusBadRequest)
+		return
+	}
+
+	rows, err := cr.ReadAll()
+	if err != nil {
+		http.Error(w, "invalid CSV file", http.StatusBadRequest)
+		return
+	}
+	if len(rows) > maxImportRows {
+		http.Error(w, fmt.Sprintf("file has %d data rows, exceeding the %d row limit", len(rows), maxImportRows), http.StatusBadRequest)
+		return
+	}
+
+	result := importResult{
+		Duplicates: []importDuplicate{},
+		Errors:     []importIssue{},
+		Warnings:   []importIssue{},
+	}
+	now := time.Now()
+	for i, row := range rows {
+		rowNum := i + 2 // header is row 1, first data row is 2
+		h.importRow(&result, row, rowNum, now)
+	}
+
+	writeJSON(w, http.StatusOK, result)
+}
+
+// importRow parses and processes a single CSV data row, appending to result.
+func (h *Handler) importRow(result *importResult, row []string, rowNum int, now time.Time) {
+	job, stageName, err := parseImportRow(row, now)
+	if err != nil {
+		result.Errors = append(result.Errors, importIssue{Row: rowNum, Message: err.Error()})
+		return
+	}
+
+	dup, err := h.store.FindDuplicate(&job)
+	if err != nil {
+		result.Errors = append(result.Errors, importIssue{Row: rowNum, Message: err.Error()})
+		return
+	}
+	if dup != nil {
+		result.Duplicates = append(result.Duplicates, importDuplicate{
+			Row:      rowNum,
+			Job:      toImportJobView(job, stageName),
+			Existing: *dup,
+		})
+		return
+	}
+
+	if err := h.store.Create(&job); err != nil {
+		result.Errors = append(result.Errors, importIssue{Row: rowNum, Message: err.Error()})
+		return
+	}
+	result.Created++
+
+	if stageName == "" {
+		return
+	}
+	stages, err := h.store.ListStages(job.ID)
+	if err != nil {
+		result.Errors = append(result.Errors, importIssue{Row: rowNum, Message: err.Error()})
+		return
+	}
+	matched := matchStage(stages, stageName)
+	if matched == nil {
+		created := store.Stage{JobID: job.ID, Name: stageName, SortOrder: len(stages)}
+		if err := h.store.CreateStage(&created); err != nil {
+			result.Errors = append(result.Errors, importIssue{Row: rowNum, Message: err.Error()})
+			return
+		}
+		matched = &created
+		result.StagesCreated++
+	}
+	// AddStageLog is the atomic helper (StageLog row + jobs.stage_id) shared with
+	// POST /api/jobs/{id}/logs, preserving the stage-log invariant on import too.
+	if err := h.store.AddStageLog(job.ID, &store.StageLog{StageID: &matched.ID}); err != nil {
+		result.Errors = append(result.Errors, importIssue{Row: rowNum, Message: err.Error()})
+	}
+}
+
+// parseImportRow validates and converts one CSV data row into a Job plus its
+// raw (trimmed) Stage column, applying the column rules in REQUIREMENTS.md
+// section 4. ID, Created At, and Next Meeting are ignored.
+func parseImportRow(row []string, now time.Time) (store.Job, string, error) {
+	wantFields := len(csvHeader())
+	if len(row) != wantFields {
+		return store.Job{}, "", fmt.Errorf("row has %d fields, want %d", len(row), wantFields)
+	}
+
+	company := strings.TrimSpace(row[1])
+	if company == "" {
+		return store.Job{}, "", fmt.Errorf("company is required")
+	}
+	position := strings.TrimSpace(row[2])
+	if position == "" {
+		return store.Job{}, "", fmt.Errorf("position is required")
+	}
+
+	status := strings.TrimSpace(row[3])
+	if status == "" {
+		status = string(store.StatusProspect)
+	} else if !validStatus(status) {
+		return store.Job{}, "", fmt.Errorf("invalid status %q", status)
+	}
+
+	var appliedAt *time.Time
+	if raw := strings.TrimSpace(row[5]); raw != "" {
+		// wall date: parsed with no zone info, time.Parse defaults to UTC, i.e.
+		// stored at 00:00:00Z (see the applied_at invariant in CLAUDE.md).
+		parsed, err := time.Parse(time.DateOnly, raw)
+		if err != nil {
+			return store.Job{}, "", fmt.Errorf("invalid applied at date %q, want YYYY-MM-DD", raw)
+		}
+		appliedAt = &parsed
+	}
+
+	var archivedAt *time.Time
+	if strings.EqualFold(strings.TrimSpace(row[6]), yes) {
+		archivedAt = &now
+	}
+
+	job := store.Job{
+		Company:    company,
+		Position:   position,
+		Status:     store.ApplicationStatus(status),
+		AppliedAt:  appliedAt,
+		ArchivedAt: archivedAt,
+		TopMatch:   strings.EqualFold(strings.TrimSpace(row[7]), yes),
+		URL:        row[8],
+		Notes:      row[9],
+	}
+	return job, strings.TrimSpace(row[4]), nil
+}
+
+func validStatus(s string) bool {
+	switch store.ApplicationStatus(s) {
+	case store.StatusProspect, store.StatusApplied, store.StatusInProgress, store.StatusOnHold,
+		store.StatusNegotiating, store.StatusAccepted, store.StatusRejected, store.StatusCanceled:
+		return true
+	default:
+		return false
+	}
+}
+
+// matchStage finds a job's cloned stage by name, case/trim-insensitively.
+// No match returns nil; the import caller then creates the stage for the job.
+func matchStage(stages []store.Stage, name string) *store.Stage {
+	name = strings.ToLower(strings.TrimSpace(name))
+	for i := range stages {
+		if strings.ToLower(strings.TrimSpace(stages[i].Name)) == name {
+			return &stages[i]
+		}
+	}
+	return nil
+}
+
+func toImportJobView(j store.Job, stageName string) importJobView {
+	return importJobView{
+		Company:   j.Company,
+		Position:  j.Position,
+		Status:    string(j.Status),
+		AppliedAt: j.AppliedAt,
+		Stage:     stageName,
+		Archived:  j.ArchivedAt != nil,
+		TopMatch:  j.TopMatch,
+		URL:       j.URL,
+		Notes:     j.Notes,
+	}
+}
+
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	var j store.Job
 	if err := json.NewDecoder(r.Body).Decode(&j); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
+	}
+	if r.URL.Query().Get("allow_duplicate") != "1" {
+		dup, err := h.store.FindDuplicate(&j)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if dup != nil {
+			writeJSON(w, http.StatusConflict, map[string]any{"error": "duplicate", "duplicate": dup})
+			return
+		}
 	}
 	if err := h.store.Create(&j); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -167,6 +167,31 @@ func (s *Store) Create(j *Job) error {
 	return nil
 }
 
+// FindDuplicate returns an existing job with the same company and position
+// (case-insensitive) whose application is less than 6 months old, or nil if none.
+// The date check happens in Go because applied_at is stored as RFC3339 text with
+// mixed UTC offsets, which doesn't compare reliably as a string in SQL.
+func (s *Store) FindDuplicate(job *Job) (*Job, error) {
+	candidates := []Job{}
+	err := s.db.
+		Where("LOWER(TRIM(company)) = LOWER(TRIM(?)) AND LOWER(TRIM(position)) = LOWER(TRIM(?))", job.Company, job.Position).
+		Find(&candidates).Error
+	if err != nil {
+		return nil, fmt.Errorf("finding duplicate job: %w", err)
+	}
+	cutoff := time.Now().AddDate(0, -6, 0)
+	for i := range candidates {
+		appliedAt := candidates[i].CreatedAt
+		if candidates[i].AppliedAt != nil {
+			appliedAt = *candidates[i].AppliedAt
+		}
+		if !appliedAt.Before(cutoff) {
+			return &candidates[i], nil
+		}
+	}
+	return nil, nil //nolint:nilnil // documented contract: nil means no duplicate; all callers check dup == nil
+}
+
 func (s *Store) ListDefaultStages() ([]Stage, error) {
 	stages := []Stage{}
 	return stages, s.db.Where("job_id = 0").Order("sort_order").Find(&stages).Error

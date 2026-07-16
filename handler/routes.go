@@ -15,6 +15,7 @@ func Routes(h *Handler, static http.Handler) *http.ServeMux {
 	mux.HandleFunc("GET /api/stats", h.Stats)
 	mux.HandleFunc("GET /api/version", h.Version)
 	mux.HandleFunc("GET /api/jobs/export", h.ExportCSV)
+	mux.HandleFunc("POST /api/jobs/import", h.ImportCSV)
 	mux.HandleFunc("POST /api/jobs", h.Create)
 	mux.HandleFunc("PUT /api/jobs/{id}", h.Update)
 	mux.HandleFunc("PUT /api/jobs/{id}/top-match", h.SetTopMatch)
